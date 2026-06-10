@@ -53,7 +53,7 @@ export const metadata: Metadata = {
       'Gérez vos abonnés, tournées de collecte et recouvrement mobile money (Tmoney/Flooz) depuis un seul tableau de bord. Conçu pour les délégataires de service public au Togo.',
     images: [
       {
-        url: '/og-image.png',
+        url: '/opengraph-image',
         width: 1200,
         height: 630,
         alt: 'WasteFlow — Dashboard de pilotage DSP',
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     title: 'WasteFlow — Pilotage DSP Déchets Solides',
     description:
       'Logiciel de gestion des contrats DSP pour les délégataires de collecte de déchets au Togo. Abonnés, tournées, recouvrement Tmoney/Flooz.',
-    images: ['/og-image.png'],
+    images: ['/opengraph-image'],
     creator: '@fluxdechets',
   },
   category: 'technology',
@@ -81,7 +81,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
