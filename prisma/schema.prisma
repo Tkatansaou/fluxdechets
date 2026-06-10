@@ -1,0 +1,458 @@
+// WasteFlow — Prisma Schema
+// Base izikit (User, Organization, auth primitives) + WasteFlow domain models
+// Generated: 2026-06-07
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── BASE IZIKIT — Auth & Users ─────────────────────────────────────────────
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String?
+  emailVerifiedAt   DateTime?
+  tokenVersion      Int       @default(0)
+  name              String?
+  avatarUrl         String?
+  role              String    @default("USER") // USER | ADMIN | SUPERADMIN
+  status            String    @default("ACTIVE") // ACTIVE | SUSPENDED
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  verificationCodes VerificationCode[]
+  oauthAccounts     OAuthAccount[]
+  adminActions      AdminAction[]
+  ownedOrgs         Organization[] @relation("OrgOwner")
+  memberships       OrganizationMember[]
+
+  // WasteFlow relations
+  paiementsAgents  Paiement[]
+  tourneesChauf    Tournee[]   @relation("TourneeChauffeur")
+  carburantsAgents Carburant[]
+  mouvementsAgents MouvementStock[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model AdminAction {
+  id         String   @id @default(cuid())
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  action     String
+  targetType String?
+  targetId   String?
+  metadata   Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  ownerId   String
+  owner     User     @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  members   OrganizationMember[]
+  typeOrg   String   @default("delegataire") // delegataire | mairie
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // WasteFlow DSP/Mairie profile (1-to-1)
+  deleProf  DelegataireProfil?
+
+  @@index([ownerId])
+  @@index([typeOrg])
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String       @default("MEMBER") // OWNER | ADMIN | MEMBER | CHAUFFEUR | RECOUVREMENT
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+}
+
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          String
+  providerAccountId String
+  refreshToken      String?
+  createdAt         DateTime @default(now())
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model VerificationCode {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String
+  type      String    // EMAIL_VERIFY | PASSWORD_RESET
+  expiresAt DateTime
+  usedAt    DateTime?
+  attempts  Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  @@index([userId, type])
+  @@index([code, type])
+}
+
+model WebhookLog {
+  id          String    @id @default(cuid())
+  provider    String
+  externalId  String
+  eventType   String
+  payload     Json
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([externalId, eventType])
+  @@index([provider, createdAt])
+}
+
+model OutboxEvent {
+  id          String    @id @default(cuid())
+  kind        String
+  payload     Json
+  status      String    @default("PENDING")
+  attempts    Int       @default(0)
+  lastError   String?
+  scheduledAt DateTime  @default(now())
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([status, scheduledAt])
+}
+
+model EmailJob {
+  id          String    @id @default(cuid())
+  to          String
+  subject     String
+  html        String
+  text        String?
+  status      String    @default("PENDING")
+  attempts    Int       @default(0)
+  lastError   String?
+  scheduledAt DateTime  @default(now())
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([status, scheduledAt])
+}
+
+// Payment orders (izikit base — used by Bictorys mobile money integration)
+model Order {
+  id              String    @id @default(cuid())
+  userId          String?
+  amount          Int       // XOF, smallest unit (1 FCFA = 1)
+  currency        String    @default("XOF")
+  status          String    @default("PENDING") // PENDING | PAID | EXPIRED | FAILED | REFUNDED
+  customerEmail   String?
+  customerPhone   String?
+  customerName    String?
+  metadata        Json?
+  idempotencyKey  String?   @unique
+  provider        String    @default("bictorys")
+  providerChargeId String?  @unique
+  paymentUrl      String?
+  paymentMethod   String?   // TMONEY | FLOOZ
+  expiresAt       DateTime
+  paidAt          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // WasteFlow: link to Paiement
+  paiement        Paiement?
+
+  @@index([status, expiresAt])
+  @@index([provider, providerChargeId])
+}
+
+// ─── WASTEFLOW DOMAIN ────────────────────────────────────────────────────────
+
+// Profile DSP ou Mairie en gestion directe (1-to-1 with Organization)
+model DelegataireProfil {
+  orgId                String       @id
+  org                  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  telephone            String?
+  adresse              String?
+  commune              String       @default("Commune de Vo1 (Vogan)")
+  region               String?      // pour mairies : région administrative
+  numContrat           String?      // null pour les mairies en gestion directe
+  dateContrat          DateTime?    // null pour les mairies en gestion directe
+  budgetAnnuel         Int?         // XOF — budget annuel déchets (mairies)
+  objectifAbonnes      Int          @default(900)
+  objectifRecouvrement Int          @default(80)   // %
+  objectifCollecte     Int          @default(99)   // %
+  paygateApiKey        String?      // encrypted via AES-256-GCM
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  zones        Zone[]
+  engins       Engin[]
+  consommables Consommable[]
+  rapports     Rapport[]
+  employes     Employe[]
+}
+
+model Zone {
+  id                String            @id @default(cuid())
+  orgId             String
+  org               DelegataireProfil @relation(fields: [orgId], references: [orgId], onDelete: Cascade)
+  nom               String
+  description       String?
+  frequenceCollecte String            @default("bi-hebdomadaire")
+  createdAt         DateTime          @default(now())
+
+  abonnes  Abonne[]
+  tournees Tournee[]
+  employes Employe[]
+
+  @@index([orgId])
+}
+
+model Abonne {
+  id                String   @id @default(cuid())
+  zoneId            String
+  zone              Zone     @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  nom               String
+  prenom            String
+  telephone         String
+  adresse           String?
+  statut            String   @default("impayé")   // à-jour | en-retard | impayé | inactif
+  frequenceCollecte String   @default("bi-hebdomadaire")
+  dateInscription   DateTime @default(now())
+  actif             Boolean  @default(true)
+  lienPaiementToken String   @unique @default(cuid())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  paiements Paiement[]
+  marquages Marquage[]
+
+  @@index([zoneId])
+  @@index([telephone])
+  @@index([statut])
+}
+
+model Paiement {
+  id           String   @id @default(cuid())
+  abonneId     String
+  abonne       Abonne   @relation(fields: [abonneId], references: [id], onDelete: Cascade)
+  agentId      String?
+  agent        User?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  montant      Int      // XOF
+  moyen        String   // mobile-money | espèces
+  operateur    String?  // tmoney | flooz
+  statut       String   @default("validé") // validé | en-attente | échoué
+  reference    String   @unique @default(cuid())
+  moisConcerne String   // YYYY-MM
+  orderId      String?  @unique
+  order        Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  date         DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@index([abonneId])
+  @@index([moisConcerne])
+  @@index([statut])
+}
+
+model Engin {
+  id              String            @id @default(cuid())
+  orgId           String
+  org             DelegataireProfil @relation(fields: [orgId], references: [orgId], onDelete: Cascade)
+  immatriculation String
+  type            String            // tricycle | camion-benne | charrette
+  marque          String?
+  modele          String?
+  annee           Int?
+  statut          String            @default("opérationnel") // opérationnel | en-panne | en-maintenance
+  kilometrage     Int               @default(0)
+  dateAcquisition DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  tournees     Tournee[]
+  maintenances Maintenance[]
+  carburants   Carburant[]
+  pannes       PanneEngin[]
+
+  @@index([orgId])
+  @@index([statut])
+}
+
+model Tournee {
+  id          String   @id @default(cuid())
+  zoneId      String
+  zone        Zone     @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  enginId     String
+  engin       Engin    @relation(fields: [enginId], references: [id], onDelete: Restrict)
+  chauffeurId String
+  chauffeur   User     @relation("TourneeChauffeur", fields: [chauffeurId], references: [id], onDelete: Restrict)
+  date        DateTime
+  statut      String   @default("planifiée") // planifiée | en-cours | terminée | annulée
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  marquages Marquage[]
+
+  @@index([zoneId])
+  @@index([date])
+  @@index([statut])
+}
+
+model Marquage {
+  id            String    @id @default(cuid())
+  tourneeId     String
+  tournee       Tournee   @relation(fields: [tourneeId], references: [id], onDelete: Cascade)
+  abonneId      String
+  abonne        Abonne    @relation(fields: [abonneId], references: [id], onDelete: Cascade)
+  statut        String    @default("en-attente") // en-attente | effectué | non-effectué
+  motif         String?   // accès-bloqué | bac-absent | panne-engin | autre
+  motifDetail   String?
+  heureMarquage DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@unique([tourneeId, abonneId])
+  @@index([tourneeId])
+  @@index([abonneId])
+}
+
+model Maintenance {
+  id              String   @id @default(cuid())
+  enginId         String
+  engin           Engin    @relation(fields: [enginId], references: [id], onDelete: Cascade)
+  type            String   // vidange | pneus | freins | moteur | carrosserie | révision-générale | autre
+  description     String?
+  cout            Int      @default(0) // XOF
+  date            DateTime
+  prestataire     String?
+  kilometrageLors Int?
+  prochainKm      Int?
+  createdAt       DateTime @default(now())
+
+  @@index([enginId])
+}
+
+model Carburant {
+  id          String   @id @default(cuid())
+  enginId     String
+  engin       Engin    @relation(fields: [enginId], references: [id], onDelete: Cascade)
+  agentId     String?
+  agent       User?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  litres      Float
+  cout        Int      // XOF
+  kilometrage Int
+  date        DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([enginId])
+}
+
+model PanneEngin {
+  id              String    @id @default(cuid())
+  enginId         String
+  engin           Engin     @relation(fields: [enginId], references: [id], onDelete: Cascade)
+  description     String
+  date            DateTime
+  statut          String    @default("ouverte") // ouverte | en-cours | résolue
+  coutReparation  Int?      // XOF
+  dateResolution  DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([enginId])
+  @@index([statut])
+}
+
+model Consommable {
+  id           String            @id @default(cuid())
+  orgId        String
+  org          DelegataireProfil @relation(fields: [orgId], references: [orgId], onDelete: Cascade)
+  nom          String
+  categorie    String            // carburant | epi | pieces-detachees | sacs-poubelle | autre
+  unite        String
+  stockActuel  Float             @default(0)
+  seuilAlerte  Float             @default(0)
+  prixUnitaire Int               @default(0) // XOF
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  mouvements MouvementStock[]
+
+  @@index([orgId])
+}
+
+model MouvementStock {
+  id            String      @id @default(cuid())
+  consommableId String
+  consommable   Consommable @relation(fields: [consommableId], references: [id], onDelete: Cascade)
+  agentId       String?
+  agent         User?       @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  type          String      // entrée | sortie
+  quantite      Float
+  date          DateTime
+  motif         String?
+  createdAt     DateTime    @default(now())
+
+  @@index([consommableId])
+}
+
+model Employe {
+  id           String            @id @default(cuid())
+  orgId        String
+  org          DelegataireProfil @relation(fields: [orgId], references: [orgId], onDelete: Cascade)
+  nom          String
+  prenom       String
+  telephone    String
+  email        String?
+  poste        String            // chauffeur | agent-recouvrement | agent-collecte | superviseur | comptable | technicien | autre
+  statut       String            @default("actif") // actif | inactif | congé | suspendu
+  dateEmbauche DateTime?
+  salaire      Int?              // XOF/mois
+  zoneId       String?
+  zone         Zone?             @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  notes        String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([orgId])
+  @@index([statut])
+  @@index([poste])
+}
+
+model Rapport {
+  id          String            @id @default(cuid())
+  orgId       String
+  org         DelegataireProfil @relation(fields: [orgId], references: [orgId], onDelete: Cascade)
+  trimestre   String            // T1 | T2 | T3 | T4
+  annee       Int
+  statut      String            @default("brouillon") // brouillon | finalisé
+  donnees     Json              @default("{}")
+  generatedAt DateTime?
+  createdAt   DateTime          @default(now())
+
+  @@unique([orgId, trimestre, annee])
+  @@index([orgId])
+}
