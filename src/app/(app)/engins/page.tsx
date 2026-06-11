@@ -93,7 +93,7 @@ export default function EnginsPage() {
   return (
     <div className="space-y-4 max-w-4xl">
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: 'Total engins', val: stats.total, color: 'text-gray-900' },
           { label: 'Opérationnels', val: stats.op, color: 'text-emerald-600' },

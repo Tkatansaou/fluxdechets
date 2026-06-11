@@ -223,7 +223,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Conformité contractuelle */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { label: 'Abonnés vs objectif', val: Math.round((kpis.abonnesActifs / kpis.objectifAbonnes) * 100) },
           { label: 'Recouvrement vs objectif', val: Math.round((kpis.tauxRecouvrement / kpis.objectifRecouvrement) * 100) },
