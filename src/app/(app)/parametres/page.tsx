@@ -56,7 +56,7 @@ export default function ParametresPage() {
 
   const [org, setOrg] = useState<OrgData | null>(null)
   const [zones, setZones] = useState<Zone[]>([])
-  const members: Member[] = []
+  const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
 
   const [orgForm, setOrgForm] = useState({
@@ -73,12 +73,14 @@ export default function ParametresPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [paramRes, zoneRes] = await Promise.all([
+      const [paramRes, zoneRes, membresRes] = await Promise.all([
         api<{ org: OrgData; profil: ProfilData | null }>('/api/parametres'),
         api<{ zones: Zone[] }>('/api/zones'),
+        api<{ membres: Member[] }>('/api/membres'),
       ])
       setOrg(paramRes.org)
       setZones(zoneRes.zones)
+      setMembers(membresRes.membres ?? [])
 
       const p = paramRes.profil
       setOrgForm({

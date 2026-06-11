@@ -4,6 +4,8 @@ WasteFlow est un SaaS de pilotage de contrats DSP (délégation de service publi
 
 Infrastructure adaptée de **izikit** (faratasn-pixel/izikit) : Next.js 16 + Prisma 5 + Neon + JWT auth + Bictorys.
 
+> **État migration (juin 2026)** : toutes les pages `(app)` sont connectées aux vraies API REST — `AppContext` (mock localStorage) n'est plus utilisé dans aucune page métier.
+
 ---
 
 ## Stack
@@ -58,6 +60,49 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 - **`src/lib/server/middleware.ts`** — `requireAuth`, `requireAdmin`, `requireOrgAccess`
 - **`src/lib/api.ts`** — Client fetch wrapper (CSRF auto, refresh auto sur 401)
 - **`src/contexts/AuthContext.tsx`** — React context `useAuth()`, `useUser()`
+
+### Pattern pages client
+
+Toutes les pages `(app)` suivent le même pattern :
+
+```ts
+'use client'
+import { useState, useEffect, useCallback } from 'react'
+import { api, ApiError } from '@/lib/api'
+
+// 1. Charger via useCallback + useEffect
+const load = useCallback(async () => { ... }, [deps])
+useEffect(() => { load() }, [load])
+
+// 2. Muter via api() avec body typé
+await api('/api/resource', { method: 'POST', body: { ... } })
+
+// 3. Erreurs avec toast.error(err instanceof ApiError ? err.message : 'Erreur')
+```
+
+Conversions clés mock → Prisma : `zone_id→zoneId`, `lien_paiement_token→lienPaiementToken`, `stock_actuel→stockActuel`, `seuil_alerte→seuilAlerte`, `prix_unitaire→prixUnitaire`, `mois_concerne→moisConcerne`, `date_acquisition→dateAcquisition`.
+
+### Routes API disponibles
+
+| Route | Méthodes | Description |
+|---|---|---|
+| `/api/abonnes` | GET, POST | Liste (q, zoneId, statut), création |
+| `/api/abonnes/[id]` | GET, PATCH, DELETE | Fiche + paiements + marquages |
+| `/api/zones` | GET, POST | Zones de l'org — lookup + création |
+| `/api/membres` | GET | Membres de l'org avec user (lookup) |
+| `/api/paiements` | GET, POST | Recouvrement, saisie manuelle |
+| `/api/engins` | GET, POST | Flotte |
+| `/api/engins/[id]` | GET, PATCH | Fiche + actions dispatch |
+| `/api/tournees` | GET, POST | Planning (debut/fin params) |
+| `/api/tournees/[id]` | GET, PATCH, POST | Fiche, statut, marquages |
+| `/api/consommables` | GET, POST | Stocks + mouvementsRecents |
+| `/api/consommables/[id]` | GET, POST | Fiche + mouvement stock |
+| `/api/rapports` | GET, POST | Liste + génération trimestre/année |
+| `/api/commune` | GET | Dashboard lecture seule mairie (KPIs, zones, flotte, activité) |
+
+**Pattern action-dispatch engins** : `PATCH /api/engins/[id]` avec `{ action: 'panne'|'maintenance'|'carburant'|'resolve-panne', ...data }`.
+
+**Marquages terrain** : `POST /api/tournees/[id]/marquages` avec `{ abonneId, statut, motif?, motifDetail? }` — upsert, auto-passe la tournée à `en-cours`.
 
 ### Paiements (Bictorys)
 
@@ -126,24 +171,24 @@ npm run seed
 
 ## Pages et routes
 
-| Route | Description |
-|---|---|
-| `/login` | Connexion JWT |
-| `/signup` | Création compte délégataire |
-| `/dashboard` | KPIs DSP temps réel |
-| `/abonnes` | Registre abonnés |
-| `/abonnes/[id]` | Fiche abonné + historique |
-| `/abonnes/nouveau` | Formulaire création |
-| `/paiements` | Recouvrement consolidé |
-| `/tournees` | Planning hebdomadaire |
-| `/tournees/terrain` | Saisie terrain (mobile) |
-| `/engins` | Flotte véhicules |
-| `/engins/[id]` | Fiche engin + maintenance |
-| `/rapports` | Rapports DSP + export PDF |
-| `/consommables` | Stocks & mouvements |
-| `/parametres` | Org, zones, équipe |
-| `/commune` | Vue lecture seule mairie |
-| `/pay/[token]` | Paiement mobile money abonné |
+| Route | Description | Statut |
+|---|---|---|
+| `/login` | Connexion JWT | ✅ réel |
+| `/signup` | Création compte délégataire | ✅ réel |
+| `/dashboard` | KPIs DSP temps réel | ✅ réel |
+| `/abonnes` | Registre abonnés + import CSV | ✅ réel |
+| `/abonnes/[id]` | Fiche abonné + historique paiements/passages | ✅ réel |
+| `/abonnes/nouveau` | Formulaire création abonné | ✅ réel |
+| `/paiements` | Recouvrement consolidé | ✅ réel |
+| `/tournees` | Planning hebdomadaire (vue semaine) | ✅ réel |
+| `/tournees/terrain` | Saisie terrain mobile (marquages) | ✅ réel |
+| `/engins` | Flotte véhicules + signalement panne | ✅ réel |
+| `/engins/[id]` | Fiche engin + entretiens + carburant + pannes | ✅ réel |
+| `/rapports` | Rapports DSP trimestriels (génération + historique) | ✅ réel |
+| `/consommables` | Stocks, alertes seuil, entrées/sorties | ✅ réel |
+| `/parametres` | Org, zones, équipe | ✅ réel |
+| `/commune` | Vue lecture seule mairie (synthèse, zones, flotte, activité) | ✅ réel |
+| `/pay/[token]` | Paiement mobile money abonné | ✅ réel |
 
 ---
 

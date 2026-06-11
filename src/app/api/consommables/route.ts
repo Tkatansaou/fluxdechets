@@ -19,19 +19,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const auth = await requireAuth(req)
   if (auth instanceof NextResponse) return auth
 
-  const consommables = await prisma.consommable.findMany({
-    where: { orgId: auth.orgId },
-    include: {
-      mouvements: {
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-        select: { id: true, type: true, quantite: true, date: true, motif: true },
-      },
-    },
-    orderBy: { createdAt: 'asc' },
-  })
+  const [consommables, mouvementsRecents] = await Promise.all([
+    prisma.consommable.findMany({
+      where: { orgId: auth.orgId },
+      orderBy: { createdAt: 'asc' },
+    }),
+    prisma.mouvementStock.findMany({
+      where: { consommable: { orgId: auth.orgId } },
+      include: { consommable: { select: { id: true, nom: true, unite: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    }),
+  ])
 
-  return NextResponse.json({ consommables })
+  return NextResponse.json({ consommables, mouvementsRecents })
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {

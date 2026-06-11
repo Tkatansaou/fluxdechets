@@ -7,9 +7,9 @@ import { verifyCsrf } from '@/lib/server/auth'
 import prisma from '@/lib/server/prisma'
 
 const createSchema = z.object({
-  nom: z.string().min(1).max(100),
-  description: z.string().optional(),
-  frequenceCollecte: z.enum(['hebdomadaire', 'bi-hebdomadaire']).default('bi-hebdomadaire'),
+  nom: z.string().min(1).max(200),
+  description: z.string().max(500).optional(),
+  frequenceCollecte: z.enum(['bi-hebdomadaire', 'hebdomadaire']).default('bi-hebdomadaire'),
 })
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -18,8 +18,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const zones = await prisma.zone.findMany({
     where: { orgId: auth.orgId },
-    include: { _count: { select: { abonnes: { where: { actif: true } } } } },
-    orderBy: { createdAt: 'asc' },
+    select: {
+      id: true, nom: true, description: true, frequenceCollecte: true,
+      _count: { select: { abonnes: true } },
+    },
+    orderBy: { nom: 'asc' },
   })
 
   return NextResponse.json({ zones })
@@ -36,7 +39,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!body.success) return NextResponse.json({ error: 'VALIDATION_ERROR', issues: body.error.issues }, { status: 422 })
 
   const zone = await prisma.zone.create({
-    data: { ...body.data, orgId: auth.orgId },
+    data: { orgId: auth.orgId, ...body.data },
+    select: {
+      id: true, nom: true, description: true, frequenceCollecte: true,
+      _count: { select: { abonnes: true } },
+    },
   })
 
   return NextResponse.json({ zone }, { status: 201 })

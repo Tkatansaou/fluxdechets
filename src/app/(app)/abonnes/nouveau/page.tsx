@@ -1,51 +1,63 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, UserPlus } from 'lucide-react'
-import { useApp } from '@/context/AppContext'
+import { api, ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
 import toast from 'react-hot-toast'
 
+interface Zone { id: string; nom: string }
+
 export default function NouvelAbonnePage() {
   const router = useRouter()
-  const { state, addAbonne } = useApp()
+  const [zones, setZones] = useState<Zone[]>([])
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     nom: '', prenom: '', telephone: '', adresse: '',
-    zone_id: state.zones[0]?.id ?? '',
-    frequence_collecte: 'bi-hebdomadaire' as const,
+    zoneId: '', frequenceCollecte: 'bi-hebdomadaire',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    api<{ zones: Zone[] }>('/api/zones').then(r => {
+      setZones(r.zones)
+      if (r.zones.length > 0) setForm(f => ({ ...f, zoneId: r.zones[0].id }))
+    }).catch(() => toast.error('Impossible de charger les zones'))
+  }, [])
 
   const validate = () => {
     const errs: Record<string, string> = {}
     if (!form.nom.trim()) errs.nom = 'Nom requis'
     if (!form.prenom.trim()) errs.prenom = 'Prénom requis'
     if (!form.telephone.trim()) errs.telephone = 'Téléphone requis'
-    if (!form.zone_id) errs.zone_id = 'Zone requise'
-    // Doublon check
-    const dup = state.abonnes.find(a => a.telephone === form.telephone && a.actif)
-    if (dup) errs.telephone = `Un abonné avec ce numéro existe déjà (${dup.prenom} ${dup.nom})`
+    if (!form.zoneId) errs.zoneId = 'Zone requise'
     return errs
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
     setLoading(true)
-    await new Promise(r => setTimeout(r, 500))
-    const newAbonne = addAbonne({
-      ...form,
-      statut: 'impayé',
-      date_inscription: new Date().toISOString().split('T')[0],
-      actif: true,
-    })
-    toast.success(`${newAbonne.prenom} ${newAbonne.nom} ajouté au registre`)
-    router.push(`/abonnes/${newAbonne.id}`)
+    try {
+      const res = await api<{ abonne: { id: string; prenom: string; nom: string } }>('/api/abonnes', {
+        method: 'POST',
+        body: form,
+      })
+      toast.success(`${res.abonne.prenom} ${res.abonne.nom} ajouté au registre`)
+      router.push(`/abonnes/${res.abonne.id}`)
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.code === 'DUPLICATE_TELEPHONE') setErrors({ telephone: err.message })
+        else toast.error(err.message)
+      } else {
+        toast.error('Erreur réseau')
+      }
+      setLoading(false)
+    }
   }
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -65,73 +77,22 @@ export default function NouvelAbonnePage() {
       <Card>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Prénom"
-              required
-              value={form.prenom}
-              onChange={set('prenom')}
-              error={errors.prenom}
-              placeholder="Kofi"
-            />
-            <Input
-              label="Nom de famille"
-              required
-              value={form.nom}
-              onChange={set('nom')}
-              error={errors.nom}
-              placeholder="Mensah"
-            />
+            <Input label="Prénom" required value={form.prenom} onChange={set('prenom')} placeholder="Kofi" error={errors.prenom} />
+            <Input label="Nom" required value={form.nom} onChange={set('nom')} placeholder="Mensah" error={errors.nom} />
           </div>
-
-          <Input
-            label="Numéro de téléphone"
-            required
-            value={form.telephone}
-            onChange={set('telephone')}
-            error={errors.telephone}
-            placeholder="+22890123456"
-            type="tel"
-            hint="Format : +228 suivi de 8 chiffres"
-          />
-
-          <Input
-            label="Adresse / Repère"
-            value={form.adresse}
-            onChange={set('adresse')}
-            placeholder="Ex : Rue de la Paix, maison à gauche du dispensaire"
-          />
-
-          <Select
-            label="Zone de collecte"
-            required
-            value={form.zone_id}
-            onChange={set('zone_id')}
-            error={errors.zone_id}
-          >
-            <option value="">Choisir une zone…</option>
-            {state.zones.map(z => (
-              <option key={z.id} value={z.id}>{z.nom}</option>
-            ))}
+          <Input label="Téléphone" required value={form.telephone} onChange={set('telephone')} placeholder="+228 90 00 00 00" error={errors.telephone} />
+          <Input label="Adresse" value={form.adresse} onChange={set('adresse')} placeholder="Quartier, rue…" />
+          <Select label="Zone de collecte" required value={form.zoneId} onChange={set('zoneId')} error={errors.zoneId}>
+            <option value="">— Sélectionner —</option>
+            {zones.map(z => <option key={z.id} value={z.id}>{z.nom}</option>)}
+          </Select>
+          <Select label="Fréquence de collecte" value={form.frequenceCollecte} onChange={set('frequenceCollecte')}>
+            <option value="hebdomadaire">Hebdomadaire</option>
+            <option value="bi-hebdomadaire">Bi-hebdomadaire</option>
           </Select>
 
-          <Select
-            label="Fréquence de collecte"
-            value={form.frequence_collecte}
-            onChange={set('frequence_collecte')}
-          >
-            <option value="bi-hebdomadaire">2 fois par semaine</option>
-            <option value="hebdomadaire">1 fois par semaine</option>
-          </Select>
-
-          <div className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2.5 text-xs text-gray-500">
-            L'abonné sera créé avec le statut <strong>Impayé</strong> par défaut.
-            Un lien de paiement unique sera généré automatiquement.
-          </div>
-
-          <div className="flex gap-3 pt-1">
-            <Button type="button" variant="secondary" onClick={() => router.back()} fullWidth>
-              Annuler
-            </Button>
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="secondary" onClick={() => router.back()}>Annuler</Button>
             <Button type="submit" variant="primary" loading={loading} fullWidth>
               <UserPlus size={15} />
               Créer l'abonné

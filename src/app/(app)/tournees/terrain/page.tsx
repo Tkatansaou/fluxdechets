@@ -1,250 +1,239 @@
 'use client'
 
-import { useState } from 'react'
-import { Check, X, AlertTriangle, ChevronDown } from 'lucide-react'
-import { useApp } from '@/context/AppContext'
+import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { Check, X, ChevronDown, ArrowLeft } from 'lucide-react'
+import { api, ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
+import { Select } from '@/components/ui/Input'
 import { cn } from '@/lib/utils'
 import { MOTIF_NON_EFFECTUE_LABELS } from '@/lib/constants'
 import toast from 'react-hot-toast'
 import type { MotifNonEffectue } from '@/types'
 
+interface AbonneLite { id: string; nom: string; prenom: string; telephone: string; adresse: string | null }
+interface Marquage { id: string; abonneId: string; statut: string; motif: string | null; motifDetail: string | null; heureMarquage: string | null }
+interface TourneeLite { id: string; date: string; statut: string; zone: { id: string; nom: string }; engin: { id: string; immatriculation: string }; chauffeur: { id: string; name: string | null } }
+interface TourneeDetailed extends TourneeLite { marquages: Marquage[] }
+interface TourneeItem { id: string; date: string; statut: string; zone: { nom: string }; engin: { immatriculation: string } }
+
 export default function TerrainPage() {
-  const { state, addMarquage, updateTournee } = useApp()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const paramId = searchParams.get('id')
   const today = new Date().toISOString().split('T')[0]
-  const [selectedTourneeId, setSelectedTourneeId] = useState<string>('')
+
+  const [tourneesAujourd, setTourneesAujourd] = useState<TourneeItem[]>([])
+  const [selectedId, setSelectedId] = useState<string>(paramId ?? '')
+  const [tournee, setTournee] = useState<TourneeDetailed | null>(null)
+  const [abonnes, setAbonnes] = useState<AbonneLite[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState<string | null>(null)
   const [motifModal, setMotifModal] = useState<string | null>(null)
   const [motif, setMotif] = useState<MotifNonEffectue>('autre')
   const [motifDetail, setMotifDetail] = useState('')
 
-  const tourneesAujourdHui = state.tournees.filter(t =>
-    t.date === today && (t.statut === 'planifiée' || t.statut === 'en-cours')
-  )
+  const loadList = useCallback(async () => {
+    try {
+      const res = await api<{ tournees: TourneeItem[] }>(`/api/tournees?debut=${today}&fin=${today}`)
+      const list = (res.tournees ?? []).filter(t => t.statut === 'planifiée' || t.statut === 'en-cours')
+      setTourneesAujourd(list)
+      if (!selectedId && list.length > 0) setSelectedId(list[0].id)
+    } catch { /* silent */ }
+  }, [today]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const activeTournee = tourneesAujourdHui.find(t => t.id === selectedTourneeId) ?? tourneesAujourdHui[0]
-
-  const marquages = activeTournee
-    ? state.marquages.filter(m => m.tournee_id === activeTournee.id)
-    : []
-
-  const abonnesTour = activeTournee
-    ? state.abonnes.filter(a => a.zone_id === activeTournee.zone_id && a.actif)
-    : []
-
-  const getMarquage = (abonneId: string) => marquages.find(m => m.abonne_id === abonneId)
-
-  const handleEffectue = (abonneId: string) => {
-    const existing = getMarquage(abonneId)
-    if (existing) return
-    addMarquage({
-      tournee_id: activeTournee!.id,
-      abonne_id: abonneId,
-      statut: 'effectué',
-      heure_marquage: new Date().toISOString(),
-    })
-    if (activeTournee!.statut === 'planifiée') {
-      updateTournee(activeTournee!.id, { statut: 'en-cours' })
+  const loadTournee = useCallback(async (id: string) => {
+    if (!id) { setLoading(false); return }
+    setLoading(true)
+    try {
+      const [tRes, abRes] = await Promise.all([
+        api<{ tournee: TourneeDetailed }>(`/api/tournees/${id}`),
+        api<{ abonnes: AbonneLite[] }>(`/api/abonnes?zoneId=placeholder`), // placeholder — overridden below
+      ])
+      setTournee(tRes.tournee)
+      const aRes = await api<{ abonnes: AbonneLite[] }>(`/api/abonnes?zoneId=${tRes.tournee.zone.id}&limit=200`)
+      setAbonnes(aRes.abonnes ?? [])
+    } catch {
+      toast.error('Tournée introuvable')
+    } finally {
+      setLoading(false)
     }
-    toast.success('Collecte marquée ✓')
+  }, [])
+
+  useEffect(() => { loadList() }, [loadList])
+  useEffect(() => {
+    if (selectedId) loadTournee(selectedId)
+  }, [selectedId, loadTournee])
+
+  const marquer = async (abonneId: string, statut: 'effectué' | 'non-effectué', motifVal?: MotifNonEffectue, motifDetailVal?: string) => {
+    if (!selectedId) return
+    setSaving(abonneId)
+    try {
+      await api(`/api/tournees/${selectedId}/marquages`, {
+        method: 'POST',
+        body: { abonneId, statut, ...(motifVal ? { motif: motifVal, motifDetail: motifDetailVal } : {}) },
+      })
+      setTournee(prev => {
+        if (!prev) return prev
+        const existing = prev.marquages.find(m => m.abonneId === abonneId)
+        const newM: Marquage = { id: existing?.id ?? '', abonneId, statut, motif: motifVal ?? null, motifDetail: motifDetailVal ?? null, heureMarquage: new Date().toISOString() }
+        const marquages = existing ? prev.marquages.map(m => m.abonneId === abonneId ? newM : m) : [...prev.marquages, newM]
+        return { ...prev, marquages }
+      })
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Erreur')
+    } finally {
+      setSaving(null)
+    }
   }
 
-  const handleNonEffectue = (abonneId: string) => {
-    setMotifModal(abonneId)
-  }
-
-  const confirmNonEffectue = () => {
-    if (!motifModal || !activeTournee) return
-    addMarquage({
-      tournee_id: activeTournee.id,
-      abonne_id: motifModal,
-      statut: 'non-effectué',
-      motif,
-      motif_detail: motifDetail || undefined,
-      heure_marquage: new Date().toISOString(),
-    })
-    toast.success('Marqué comme non effectué')
+  const handleNonEffectue = async () => {
+    if (!motifModal) return
+    await marquer(motifModal, 'non-effectué', motif, motifDetail)
     setMotifModal(null)
+    setMotif('autre')
     setMotifDetail('')
   }
 
-  const handleTerminer = () => {
-    if (!activeTournee) return
-    const unmarked = abonnesTour.filter(a => !getMarquage(a.id)).length
-    if (unmarked > 0 && !confirm(`Il reste ${unmarked} point(s) non marqué(s). Terminer quand même ?`)) return
-    updateTournee(activeTournee.id, { statut: 'terminée' })
-    toast.success('Tournée terminée !')
+  const handleTerminer = async () => {
+    if (!selectedId) return
+    try {
+      await api(`/api/tournees/${selectedId}`, { method: 'PATCH', body: { statut: 'terminée' } })
+      setTournee(prev => prev ? { ...prev, statut: 'terminée' } : prev)
+      toast.success('Tournée terminée')
+    } catch {
+      toast.error('Erreur')
+    }
   }
 
-  const effectues = abonnesTour.filter(a => getMarquage(a.id)?.statut === 'effectué').length
-  const nonEffectues = abonnesTour.filter(a => getMarquage(a.id)?.statut === 'non-effectué').length
-  const enAttente = abonnesTour.filter(a => !getMarquage(a.id)).length
+  const getMarquage = (abonneId: string) => tournee?.marquages.find(m => m.abonneId === abonneId)
 
-  if (tourneesAujourdHui.length === 0) {
-    return (
-      <div className="max-w-md mx-auto">
-        <div className="text-center py-16">
-          <div className="text-4xl mb-3">📅</div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-2">Aucune tournée aujourd'hui</h2>
-          <p className="text-sm text-gray-500">Pas de tournée planifiée pour ce jour.</p>
-          <a href="/tournees" className="mt-4 inline-block text-brand-600 text-sm hover:underline">
-            Voir le planning →
-          </a>
-        </div>
-      </div>
-    )
-  }
+  const done = tournee?.marquages.length ?? 0
+  const total = abonnes.length
+  const pct = total > 0 ? Math.round(done / total * 100) : 0
+  const isTerminee = tournee?.statut === 'terminée'
 
   return (
-    <div className="max-w-sm mx-auto space-y-4">
+    <div className="max-w-lg mx-auto space-y-4">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <button onClick={() => router.push('/tournees')} className="p-1.5 hover:bg-gray-200 rounded-md text-gray-500"><ArrowLeft size={18} /></button>
+        <h2 className="font-semibold text-gray-900 text-base">Saisie terrain</h2>
+      </div>
+
       {/* Sélecteur tournée */}
-      {tourneesAujourdHui.length > 1 && (
+      {tourneesAujourd.length > 1 && (
         <div className="bg-white border border-gray-200 rounded-lg p-3">
-          <label className="text-xs font-medium text-gray-600 block mb-1.5">Tournée en cours</label>
-          <select
-            value={activeTournee?.id}
-            onChange={e => setSelectedTourneeId(e.target.value)}
-            className="w-full h-10 px-3 border border-gray-300 rounded-md text-sm"
-          >
-            {tourneesAujourdHui.map(t => {
-              const zone = state.zones.find(z => z.id === t.zone_id)
-              const engin = state.engins.find(e => e.id === t.engin_id)
-              return <option key={t.id} value={t.id}>{zone?.nom} — {engin?.immatriculation}</option>
-            })}
-          </select>
+          <Select label="Tournée" value={selectedId} onChange={e => setSelectedId(e.target.value)}>
+            {tourneesAujourd.map(t => (
+              <option key={t.id} value={t.id}>{t.zone.nom} — {t.engin.immatriculation}</option>
+            ))}
+          </Select>
         </div>
       )}
 
-      {/* Header tournée */}
-      {activeTournee && (
-        <div className="bg-[#0B1F16] text-white rounded-xl p-4">
-          <div className="text-sm text-green-300 font-medium mb-0.5">Tournée du {activeTournee.date}</div>
-          <div className="text-xl font-bold">
-            {state.zones.find(z => z.id === activeTournee.zone_id)?.nom ?? '—'}
-          </div>
-          <div className="text-sm text-green-200 mt-0.5">
-            {state.engins.find(e => e.id === activeTournee.engin_id)?.immatriculation} —{' '}
-            {state.users.find(u => u.id === activeTournee.chauffeur_id)?.prenom}
-          </div>
-
-          {/* Progress */}
-          <div className="mt-3 flex gap-3 text-sm">
-            <div className="flex-1 text-center bg-emerald-800/40 rounded-lg py-2">
-              <div className="text-2xl font-bold text-emerald-300">{effectues}</div>
-              <div className="text-xs text-emerald-400">Effectués</div>
-            </div>
-            <div className="flex-1 text-center bg-red-800/30 rounded-lg py-2">
-              <div className="text-2xl font-bold text-red-300">{nonEffectues}</div>
-              <div className="text-xs text-red-400">Non effectués</div>
-            </div>
-            <div className="flex-1 text-center bg-white/10 rounded-lg py-2">
-              <div className="text-2xl font-bold">{enAttente}</div>
-              <div className="text-xs text-green-200">En attente</div>
-            </div>
-          </div>
+      {loading ? (
+        <div className="text-center py-12 text-gray-400 text-sm">Chargement…</div>
+      ) : !tournee ? (
+        <div className="text-center py-16">
+          <div className="text-4xl mb-3">📋</div>
+          <p className="text-sm text-gray-500">Aucune tournée planifiée aujourd&apos;hui</p>
+          <Button variant="secondary" size="sm" className="mt-4" onClick={() => router.push('/tournees')}>Voir le planning</Button>
         </div>
-      )}
+      ) : (
+        <>
+          {/* Info tournée */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="font-semibold text-gray-900">{tournee.zone.nom}</div>
+                <div className="text-xs text-gray-500">{tournee.engin.immatriculation} · {tournee.chauffeur.name ?? '—'}</div>
+              </div>
+              <span className={cn('text-xs px-2 py-1 rounded-full font-medium', isTerminee ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')}>{tournee.statut}</span>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs text-gray-600">
+                <span>{done}/{total} abonnés marqués</span>
+                <span className="font-semibold">{pct}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="bg-brand-600 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+            {!isTerminee && done === total && total > 0 && (
+              <Button variant="primary" size="sm" className="w-full mt-3" onClick={handleTerminer}>Terminer la tournée</Button>
+            )}
+          </div>
 
-      {/* Liste points de collecte */}
-      <div className="space-y-2">
-        {abonnesTour.map(a => {
-          const marquage = getMarquage(a.id)
-          const done = !!marquage
-
-          return (
-            <div
-              key={a.id}
-              className={cn(
-                'bg-white border rounded-xl p-4 transition-colors',
-                marquage?.statut === 'effectué' ? 'border-emerald-200 bg-emerald-50' :
-                  marquage?.statut === 'non-effectué' ? 'border-red-200 bg-red-50' :
-                    'border-gray-200',
-              )}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900">{a.prenom} {a.nom}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{a.adresse || 'Pas d\'adresse'}</div>
-                  {marquage?.statut === 'non-effectué' && marquage.motif && (
-                    <div className="mt-1 text-xs text-red-600">
-                      Motif : {MOTIF_NON_EFFECTUE_LABELS[marquage.motif]}
-                      {marquage.motif_detail && ` — ${marquage.motif_detail}`}
+          {/* Liste abonnés */}
+          <div className="space-y-1.5">
+            {abonnes.map(ab => {
+              const m = getMarquage(ab.id)
+              const isLoading = saving === ab.id
+              return (
+                <div key={ab.id} className={cn('bg-white border rounded-xl p-3 flex items-center gap-3',
+                  m?.statut === 'effectué' ? 'border-emerald-200 bg-emerald-50/30' :
+                  m?.statut === 'non-effectué' ? 'border-red-200 bg-red-50/30' :
+                  'border-gray-200')}>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">{ab.prenom} {ab.nom}</div>
+                    {ab.adresse && <div className="text-xs text-gray-400 truncate">{ab.adresse}</div>}
+                    {m?.statut === 'non-effectué' && m.motif && (
+                      <div className="text-xs text-red-600 mt-0.5">{MOTIF_NON_EFFECTUE_LABELS[m.motif as MotifNonEffectue] ?? m.motif}</div>
+                    )}
+                  </div>
+                  {isTerminee ? (
+                    <div className={cn('text-xs font-medium', m?.statut === 'effectué' ? 'text-emerald-600' : m?.statut === 'non-effectué' ? 'text-red-600' : 'text-gray-400')}>
+                      {m?.statut === 'effectué' ? '✓' : m?.statut === 'non-effectué' ? '✗' : '—'}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        disabled={isLoading}
+                        onClick={() => marquer(ab.id, 'effectué')}
+                        className={cn('w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors',
+                          m?.statut === 'effectué' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-gray-300 text-gray-400 hover:border-emerald-400 hover:text-emerald-500')}>
+                        <Check size={14} />
+                      </button>
+                      <button
+                        disabled={isLoading}
+                        onClick={() => { setMotifModal(ab.id); setMotif('autre'); setMotifDetail('') }}
+                        className={cn('w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors',
+                          m?.statut === 'non-effectué' ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 text-gray-400 hover:border-red-400 hover:text-red-500')}>
+                        <X size={14} />
+                      </button>
                     </div>
                   )}
                 </div>
-
-                {!done ? (
-                  <div className="flex gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => handleNonEffectue(a.id)}
-                      className="w-12 h-12 rounded-xl bg-red-100 hover:bg-red-200 flex items-center justify-center transition-colors active:scale-95"
-                    >
-                      <X size={20} className="text-red-600" />
-                    </button>
-                    <button
-                      onClick={() => handleEffectue(a.id)}
-                      className="w-12 h-12 rounded-xl bg-emerald-100 hover:bg-emerald-200 flex items-center justify-center transition-colors active:scale-95"
-                    >
-                      <Check size={20} className="text-emerald-600" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className={cn(
-                    'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0',
-                    marquage.statut === 'effectué' ? 'bg-emerald-200' : 'bg-red-200',
-                  )}>
-                    {marquage.statut === 'effectué'
-                      ? <Check size={18} className="text-emerald-700" />
-                      : <X size={18} className="text-red-700" />
-                    }
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Terminer */}
-      {activeTournee && activeTournee.statut !== 'terminée' && (
-        <Button variant="primary" fullWidth size="lg" onClick={handleTerminer}>
-          Terminer la tournée ({effectues + nonEffectues}/{abonnesTour.length} marqués)
-        </Button>
-      )}
-
-      {/* Modal motif non effectué */}
-      {motifModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMotifModal(null)} />
-          <div className="relative bg-white rounded-t-2xl w-full max-w-sm p-5 space-y-4 fade-in">
-            <h3 className="text-base font-semibold">Motif de non-collecte</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(MOTIF_NON_EFFECTUE_LABELS).map(([k, v]) => (
-                <button
-                  key={k}
-                  onClick={() => setMotif(k as MotifNonEffectue)}
-                  className={cn(
-                    'p-3 border rounded-xl text-sm font-medium text-left transition-colors',
-                    motif === k ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-gray-200 hover:border-gray-300',
-                  )}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-            <input
-              type="text"
-              value={motifDetail}
-              onChange={e => setMotifDetail(e.target.value)}
-              placeholder="Détails supplémentaires (optionnel)"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
-            <div className="flex gap-3">
-              <Button variant="secondary" fullWidth onClick={() => setMotifModal(null)}>Annuler</Button>
-              <Button variant="danger" fullWidth onClick={confirmNonEffectue}>Confirmer</Button>
-            </div>
+              )
+            })}
+            {abonnes.length === 0 && <div className="text-center py-8 text-gray-400 text-sm">Aucun abonné dans cette zone.</div>}
           </div>
-        </div>
+
+          {!isTerminee && done > 0 && (
+            <Button variant="secondary" size="sm" className="w-full" onClick={handleTerminer}>
+              <ChevronDown size={13} /> Terminer la tournée ({done}/{total})
+            </Button>
+          )}
+        </>
       )}
+
+      {/* Modal motif non-effectué */}
+      <Modal open={!!motifModal} onClose={() => setMotifModal(null)} title="Motif du non-passage" size="sm"
+        footer={<><Button variant="secondary" onClick={() => setMotifModal(null)}>Annuler</Button><Button variant="danger" loading={saving === motifModal} onClick={handleNonEffectue}>Confirmer</Button></>}>
+        <div className="space-y-3">
+          <Select label="Motif" value={motif} onChange={e => setMotif(e.target.value as MotifNonEffectue)}>
+            {Object.entries(MOTIF_NON_EFFECTUE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </Select>
+          <input
+            className="w-full h-9 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            placeholder="Précision (optionnel)"
+            value={motifDetail}
+            onChange={e => setMotifDetail(e.target.value)}
+          />
+        </div>
+      </Modal>
     </div>
   )
 }

@@ -1,237 +1,220 @@
 'use client'
 
-import { useState } from 'react'
-import { FileText, Download, Eye, BarChart2 } from 'lucide-react'
-import { useApp } from '@/context/AppContext'
+import { useState, useEffect, useCallback } from 'react'
+import { FileText, Download, RefreshCw } from 'lucide-react'
+import { api, ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { cn, formatDate, formatFCFA } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
+interface RapportDonnees {
+  abonnes_actifs: number
+  montant_total: number
+  montant_mobile_money: number
+  montant_especes: number
+  taux_recouvrement_global: number
+  taux_collecte: number
+  tournees_total: number
+  tournees_terminees: number
+  engins: { immatriculation: string; statut: string; kilometrage: number }[]
+  pannes_count: number
+  pannes_cout_total: number
+  generated_at: string
+}
+
+interface Rapport {
+  id: string; trimestre: string; annee: number; statut: string
+  donnees: RapportDonnees | null; generatedAt: string | null; createdAt: string
+}
+
+const QUARTERS = [
+  { id: 'T1', label: 'T1 (Jan–Mar)' },
+  { id: 'T2', label: 'T2 (Avr–Jun)' },
+  { id: 'T3', label: 'T3 (Jul–Sep)' },
+  { id: 'T4', label: 'T4 (Oct–Déc)' },
+]
+
 export default function RapportsPage() {
-  const { state } = useApp()
-  const [selectedQ, setSelectedQ] = useState('T2-2026')
-  const [previewOpen, setPreviewOpen] = useState(false)
+  const [rapports, setRapports] = useState<Rapport[]>([])
+  const [loading, setLoading] = useState(true)
+  const [generating, setGenerating] = useState(false)
+  const [selectedQ, setSelectedQ] = useState('T2')
+  const [selectedY, setSelectedY] = useState(new Date().getFullYear())
+  const currentRapport = rapports.find(r => r.trimestre === selectedQ && r.annee === selectedY)
 
-  const quarters = [
-    { id: 'T1-2026', label: 'T1 2026 (Jan–Mar)', months: ['2026-01', '2026-02', '2026-03'] },
-    { id: 'T2-2026', label: 'T2 2026 (Avr–Jun)', months: ['2026-04', '2026-05', '2026-06'] },
-  ]
-  const quarter = quarters.find(q => q.id === selectedQ) ?? quarters[0]
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await api<{ rapports: Rapport[] }>('/api/rapports')
+      setRapports(res.rapports ?? [])
+    } catch {
+      toast.error('Erreur de chargement')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
-  // Calculer les données du rapport
-  const paiementsTrimestre = state.paiements.filter(p =>
-    quarter.months.includes(p.mois_concerne) && p.statut === 'validé'
-  )
-  const montantMM = paiementsTrimestre.filter(p => p.moyen === 'mobile-money').reduce((s, p) => s + p.montant, 0)
-  const montantCash = paiementsTrimestre.filter(p => p.moyen === 'espèces').reduce((s, p) => s + p.montant, 0)
-  const montantTotal = montantMM + montantCash
+  useEffect(() => { load() }, [load])
 
-  const actifs = state.abonnes.filter(a => a.actif && a.statut !== 'inactif')
-  const tauxParMois = quarter.months.map(mois => {
-    const pays = paiementsTrimestre.filter(p => p.mois_concerne === mois).length
-    const taux = actifs.length > 0 ? Math.round((pays / actifs.length) * 100) : 0
-    return { mois, taux, pays }
-  })
-  const tauxMoyenRecouv = Math.round(tauxParMois.reduce((s, m) => s + m.taux, 0) / tauxParMois.length)
-
-  const tourneesT = state.tournees.filter(t =>
-    quarter.months.some(m => t.date.startsWith(m))
-  )
-  const tourneesEff = tourneesT.filter(t => t.statut === 'terminée').length
-  const tourneesTot = tourneesT.filter(t => t.statut !== 'annulée').length
-  const tauxCollecte = tourneesTot > 0 ? Math.round((tourneesEff / tourneesTot) * 100) : 100
-
-  const pannesTrimestre = state.pannes.filter(p =>
-    quarter.months.some(m => p.date.startsWith(m))
-  )
+  const handleGenerate = async () => {
+    setGenerating(true)
+    try {
+      const res = await api<{ rapport: Rapport }>('/api/rapports', {
+        method: 'POST',
+        body: { trimestre: selectedQ, annee: selectedY },
+      })
+      setRapports(prev => {
+        const filtered = prev.filter(r => !(r.trimestre === selectedQ && r.annee === selectedY))
+        return [...filtered, res.rapport]
+      })
+      toast.success(`Rapport ${selectedQ} ${selectedY} généré`)
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Erreur de génération')
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   const handlePrint = () => {
     window.print()
     toast.success('Fenêtre d\'impression ouverte')
   }
 
-  const savedRapports = state.rapports
+  const d = currentRapport?.donnees
+  const years = Array.from({ length: 3 }, (_, i) => new Date().getFullYear() - i)
 
   return (
     <div className="max-w-4xl space-y-5">
-      {/* Selector */}
+      {/* Sélecteur */}
       <div className="bg-white border border-gray-200 rounded-lg p-4">
         <div className="flex flex-wrap items-center gap-4">
           <div>
-            <label className="text-xs font-medium text-gray-700 block mb-1.5">Période du rapport</label>
-            <select
-              value={selectedQ}
-              onChange={e => setSelectedQ(e.target.value)}
-              className="h-9 px-3 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-            >
-              {quarters.map(q => <option key={q.id} value={q.id}>{q.label}</option>)}
+            <label className="text-xs font-medium text-gray-700 block mb-1.5">Trimestre</label>
+            <div className="flex gap-1.5">
+              {QUARTERS.map(q => (
+                <button key={q.id} onClick={() => setSelectedQ(q.id)}
+                  className={cn('px-3 py-1.5 rounded-md text-xs font-medium border transition-colors',
+                    selectedQ === q.id ? 'bg-brand-700 text-white border-brand-700' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400')}>
+                  {q.id}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-700 block mb-1.5">Année</label>
+            <select value={selectedY} onChange={e => setSelectedY(Number(e.target.value))}
+              className="h-9 px-3 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
-          <div className="flex gap-2 ml-auto">
-            <Button variant="secondary" size="sm" onClick={() => setPreviewOpen(true)}>
-              <Eye size={13} /> Prévisualiser
+          <div className="ml-auto flex gap-2">
+            <Button variant="secondary" size="sm" loading={generating} onClick={handleGenerate}>
+              <RefreshCw size={13} /> {currentRapport ? 'Régénérer' : 'Générer'}
             </Button>
-            <Button variant="primary" size="sm" onClick={handlePrint}>
-              <Download size={13} /> Exporter PDF
-            </Button>
+            {currentRapport && <Button variant="ghost" size="sm" onClick={handlePrint}><Download size={13} /> Imprimer</Button>}
           </div>
         </div>
       </div>
 
-      {/* Données calculées */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
-          <div className={cn('text-2xl font-bold', tauxMoyenRecouv >= 80 ? 'text-emerald-600' : 'text-amber-600')}>{tauxMoyenRecouv}%</div>
-          <div className="text-xs text-gray-500">Taux recouvrement moyen</div>
+      {/* Rapport */}
+      {loading ? (
+        <div className="text-center py-12 text-gray-400 text-sm">Chargement…</div>
+      ) : !currentRapport ? (
+        <div className="bg-white border border-dashed border-gray-300 rounded-lg p-12 text-center">
+          <FileText size={32} className="text-gray-300 mx-auto mb-3" />
+          <p className="text-sm text-gray-500 mb-4">Aucun rapport généré pour {selectedQ} {selectedY}</p>
+          <Button variant="primary" loading={generating} onClick={handleGenerate}>Générer le rapport</Button>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
-          <div className={cn('text-2xl font-bold', tauxCollecte >= 99 ? 'text-emerald-600' : 'text-amber-600')}>{tauxCollecte}%</div>
-          <div className="text-xs text-gray-500">Taux de collecte</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
-          <div className="text-2xl font-bold text-gray-900">{formatFCFA(montantTotal)}</div>
-          <div className="text-xs text-gray-500">Montant total encaissé</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
-          <div className="text-2xl font-bold text-gray-900">{actifs.length}</div>
-          <div className="text-xs text-gray-500">Abonnés actifs</div>
-        </div>
-      </div>
-
-      {/* Recouvrement par mois */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Recouvrement mensuel du trimestre</h3>
-        <div className="space-y-3">
-          {tauxParMois.map(m => (
-            <div key={m.mois} className="flex items-center gap-4">
-              <div className="w-20 text-xs font-medium text-gray-600 text-right">{m.mois}</div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="flex-1 bg-gray-100 rounded-full h-3">
-                    <div
-                      className={cn('h-3 rounded-full', m.taux >= 80 ? 'bg-emerald-500' : m.taux >= 60 ? 'bg-amber-400' : 'bg-red-500')}
-                      style={{ width: `${m.taux}%` }}
-                    />
-                  </div>
-                  <span className={cn('text-xs font-bold w-10 text-right', m.taux >= 80 ? 'text-emerald-600' : 'text-amber-600')}>
-                    {m.taux}%
-                  </span>
-                </div>
-                <div className="text-xs text-gray-400">{m.pays} paiement(s) enregistré(s)</div>
+      ) : !d ? (
+        <div className="text-center py-12 text-gray-400 text-sm">Données du rapport indisponibles</div>
+      ) : (
+        <div className="space-y-4" id="rapport-print">
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: 'Abonnés actifs', val: d.abonnes_actifs, sub: '' },
+              { label: 'Montant encaissé', val: formatFCFA(d.montant_total), sub: '' },
+              { label: 'Taux recouvrement', val: `${d.taux_recouvrement_global}%`, sub: '' },
+              { label: 'Taux collecte', val: `${d.taux_collecte}%`, sub: '' },
+            ].map(k => (
+              <div key={k.label} className="bg-white border border-gray-200 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-gray-900">{k.val}</div>
+                <div className="text-xs text-gray-500 mt-1">{k.label}</div>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Incidents */}
-      {pannesTrimestre.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Incidents engins ce trimestre</h3>
-          <div className="space-y-2">
-            {pannesTrimestre.map(p => {
-              const engin = state.engins.find(e => e.id === p.engin_id)
-              return (
-                <div key={p.id} className="flex items-start gap-3 text-sm">
-                  <span className="text-xs text-gray-400 w-20 flex-shrink-0">{formatDate(p.date)}</span>
-                  <span className="text-gray-700">
-                    <span className="font-medium">{engin?.immatriculation}</span> — {p.description}
-                    {p.statut === 'résolue' && <span className="text-emerald-600 ml-2">(résolu le {formatDate(p.date_resolution!)})</span>}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* État des engins */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">État des engins</h3>
-        <table className="w-full table-dense">
-          <thead>
-            <tr>
-              <th className="text-left">Immatriculation</th>
-              <th className="text-left">Type</th>
-              <th className="text-right">Kilométrage</th>
-              <th className="text-left">Statut</th>
-            </tr>
-          </thead>
-          <tbody>
-            {state.engins.map(e => (
-              <tr key={e.id}>
-                <td className="font-bold text-gray-900">{e.immatriculation}</td>
-                <td className="text-xs text-gray-600">{e.marque} {e.modele}</td>
-                <td className="text-right font-mono font-medium">{e.kilometrage.toLocaleString()} km</td>
-                <td>
-                  <span className={cn(
-                    'text-xs px-1.5 py-0.5 rounded font-medium',
-                    e.statut === 'opérationnel' ? 'bg-emerald-50 text-emerald-700' :
-                      e.statut === 'en-panne' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700',
-                  )}>
-                    {e.statut}
-                  </span>
-                </td>
-              </tr>
             ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Rapports sauvegardés */}
-      {savedRapports.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-900">Rapports précédents</h3>
           </div>
-          <table className="w-full table-dense">
-            <thead>
-              <tr>
-                <th className="text-left">Trimestre</th>
-                <th className="text-left">Taux recouv.</th>
-                <th className="text-left">Taux collecte</th>
-                <th className="text-right">Montant</th>
-                <th className="text-left">Statut</th>
-                <th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {savedRapports.map(r => (
-                <tr key={r.id}>
-                  <td className="font-medium text-gray-900">T{r.trimestre} {r.annee}</td>
-                  <td className={cn('font-bold', r.donnees.taux_recouvrement_global >= 80 ? 'text-emerald-600' : 'text-amber-600')}>
-                    {r.donnees.taux_recouvrement_global}%
-                  </td>
-                  <td className={cn('font-bold', r.donnees.taux_collecte >= 99 ? 'text-emerald-600' : 'text-amber-600')}>
-                    {r.donnees.taux_collecte}%
-                  </td>
-                  <td className="text-right font-mono font-semibold">{formatFCFA(r.donnees.montant_total)}</td>
-                  <td>
-                    <span className={cn('text-xs px-1.5 py-0.5 rounded font-medium', r.statut === 'finalisé' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-50 text-gray-600')}>
-                      {r.statut}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <Button size="sm" variant="ghost" onClick={() => { window.print(); toast.success('Impression lancée') }}>
-                      <FileText size={12} />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+          {/* Paiements */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Recouvrement {selectedQ} {selectedY}</h3>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div><div className="text-xl font-bold text-gray-900">{formatFCFA(d.montant_total)}</div><div className="text-xs text-gray-500">Total encaissé</div></div>
+              <div><div className="text-xl font-bold text-emerald-600">{formatFCFA(d.montant_mobile_money)}</div><div className="text-xs text-gray-500">Mobile Money</div></div>
+              <div><div className="text-xl font-bold text-blue-600">{formatFCFA(d.montant_especes)}</div><div className="text-xs text-gray-500">Espèces</div></div>
+            </div>
+          </div>
+
+          {/* Tournées */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Tournées de collecte</h3>
+            <div className="flex items-center gap-8">
+              <div className="text-center"><div className="text-2xl font-bold text-gray-900">{d.tournees_terminees}/{d.tournees_total}</div><div className="text-xs text-gray-500">Tournées effectuées</div></div>
+              <div className="flex-1 bg-gray-200 rounded-full h-3">
+                <div className="bg-brand-600 h-3 rounded-full" style={{ width: `${d.taux_collecte}%` }} />
+              </div>
+              <div className="text-lg font-bold text-brand-700">{d.taux_collecte}%</div>
+            </div>
+          </div>
+
+          {/* Engins */}
+          {d.engins.length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100 font-semibold text-sm text-gray-900">État de la flotte</div>
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="text-left text-xs font-semibold text-gray-500 px-4 py-2">Engin</th>
+                    <th className="text-left text-xs font-semibold text-gray-500 px-4 py-2">Statut</th>
+                    <th className="text-right text-xs font-semibold text-gray-500 px-4 py-2">Kilométrage</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {d.engins.map((e, i) => (
+                    <tr key={i}>
+                      <td className="px-4 py-2.5 text-sm font-medium text-gray-900">{e.immatriculation}</td>
+                      <td className="px-4 py-2.5 text-xs capitalize text-gray-600">{e.statut}</td>
+                      <td className="px-4 py-2.5 text-sm text-right text-gray-700">{e.kilometrage.toLocaleString()} km</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="text-right text-xs text-gray-400">
+            Généré le {currentRapport.generatedAt ? formatDate(currentRapport.generatedAt) : '—'} · Statut : {currentRapport.statut}
+          </div>
         </div>
       )}
 
-      {/* Printable report - hidden until print */}
-      <div className="hidden print:block">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold">{state.organisation.nom}</h1>
-          <h2 className="text-xl mt-1">Rapport trimestriel DSP — {quarter.label}</h2>
-          <p className="text-sm text-gray-600 mt-1">Contrat {state.organisation.num_contrat} · {state.organisation.commune}</p>
+      {/* Liste des rapports existants */}
+      {rapports.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 font-semibold text-sm text-gray-900">Historique des rapports</div>
+          <div className="divide-y divide-gray-50">
+            {rapports.map(r => (
+              <div key={r.id} className={cn('flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50', r.trimestre === selectedQ && r.annee === selectedY && 'bg-brand-50')}
+                onClick={() => { setSelectedQ(r.trimestre); setSelectedY(r.annee) }}>
+                <div>
+                  <span className="text-sm font-medium text-gray-900">{r.trimestre} {r.annee}</span>
+                  <span className={cn('ml-2 text-xs px-1.5 py-0.5 rounded', r.statut === 'brouillon' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700')}>{r.statut}</span>
+                </div>
+                <span className="text-xs text-gray-400">{r.generatedAt ? formatDate(r.generatedAt) : '—'}</span>
+              </div>
+            ))}
+          </div>
         </div>
-        {/* Report content would go here */}
-      </div>
+      )}
     </div>
   )
 }

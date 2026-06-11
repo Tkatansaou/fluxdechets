@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Wrench, Fuel, AlertTriangle, CheckCircle } from 'lucide-react'
-import { useApp } from '@/context/AppContext'
+import { api, ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { BadgeEngin } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
@@ -11,33 +11,88 @@ import { Input, Select, Textarea } from '@/components/ui/Input'
 import { cn, formatDate, formatFCFA } from '@/lib/utils'
 import { TYPE_ENGIN_LABELS } from '@/lib/constants'
 import toast from 'react-hot-toast'
-import type { TypeMaintenance } from '@/types'
+
+interface Maintenance { id: string; type: string; description: string | null; cout: number; date: string; prestataire: string | null; kilometrageLors: number | null }
+interface Carburant { id: string; litres: number; cout: number; kilometrage: number; date: string }
+interface Panne { id: string; description: string; date: string; statut: string; coutReparation: number | null; dateResolution: string | null }
+interface Engin {
+  id: string; immatriculation: string; type: string; marque: string | null; modele: string | null
+  annee: number | null; statut: string; kilometrage: number; dateAcquisition: string | null
+  maintenances: Maintenance[]; carburants: Carburant[]; pannes: Panne[]
+}
 
 export default function FicheEnginPage() {
-  const { id } = useParams()
+  const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const { state, addMaintenance, addCarburant, addPanne, updatePanne, updateEngin } = useApp()
+  const [engin, setEngin] = useState<Engin | null>(null)
+  const [loading, setLoading] = useState(true)
   const [maintOpen, setMaintOpen] = useState(false)
   const [carburantOpen, setCarburantOpen] = useState(false)
   const [panneOpen, setPanneOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
 
-  const engin = state.engins.find(e => e.id === id)
-  if (!engin) {
-    return (
-      <div className="text-center py-20 text-gray-500">
-        Engin introuvable.
-        <button className="block mx-auto mt-3 text-brand-600 text-sm" onClick={() => router.push('/engins')}>← Retour</button>
-      </div>
-    )
+  const [maintForm, setMaintForm] = useState({ type: 'vidange', description: '', cout: '', prestataire: '', kilometrageLors: '', date: new Date().toISOString().split('T')[0] })
+  const [carburantForm, setCarburantForm] = useState({ litres: '', cout: '', kilometrage: '', date: new Date().toISOString().split('T')[0] })
+  const [panneDesc, setPanneDesc] = useState('')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await api<{ engin: Engin }>(`/api/engins/${id}`)
+      setEngin(res.engin)
+      setMaintForm(f => ({ ...f, kilometrageLors: String(res.engin.kilometrage) }))
+      setCarburantForm(f => ({ ...f, kilometrage: String(res.engin.kilometrage) }))
+    } catch {
+      toast.error('Engin introuvable')
+      router.push('/engins')
+    } finally {
+      setLoading(false)
+    }
+  }, [id, router])
+
+  useEffect(() => { load() }, [load])
+
+  const patch = async (body: Record<string, unknown>, successMsg: string) => {
+    setSaving(true)
+    try {
+      await api(`/api/engins/${id}`, { method: 'PATCH', body })
+      toast.success(successMsg)
+      load()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Erreur')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const maintenances = state.maintenances.filter(m => m.engin_id === id).sort((a, b) => b.date.localeCompare(a.date))
-  const carburants = state.carburants.filter(c => c.engin_id === id).sort((a, b) => b.date.localeCompare(a.date))
-  const pannes = state.pannes.filter(p => p.engin_id === id).sort((a, b) => b.date.localeCompare(a.date))
-  const pannesActives = pannes.filter(p => p.statut === 'ouverte' || p.statut === 'en-cours')
+  const handleMaint = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    await patch({ action: 'maintenance', type: maintForm.type, description: maintForm.description, cout: parseInt(maintForm.cout) || 0, date: maintForm.date, prestataire: maintForm.prestataire, kilometrageLors: parseInt(maintForm.kilometrageLors) || undefined }, 'Entretien enregistré')
+    setMaintOpen(false)
+  }
 
-  // Consommation moyenne carburant
+  const handleCarburant = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    await patch({ action: 'carburant', litres: parseFloat(carburantForm.litres), cout: parseInt(carburantForm.cout), kilometrage: parseInt(carburantForm.kilometrage), date: carburantForm.date }, 'Plein enregistré')
+    setCarburantOpen(false)
+  }
+
+  const handlePanne = async () => {
+    if (!panneDesc) { toast.error('Décrivez la panne'); return }
+    await patch({ action: 'panne', description: panneDesc, date: new Date().toISOString().split('T')[0] }, 'Panne signalée')
+    setPanneOpen(false)
+    setPanneDesc('')
+  }
+
+  const handleResolvePanne = async (panneId: string) => {
+    await patch({ action: 'resolve-panne', panneId }, 'Panne résolue')
+  }
+
+  if (loading) return <div className="text-center py-20 text-gray-400 text-sm">Chargement…</div>
+  if (!engin) return null
+
+  const pannesActives = engin.pannes.filter(p => p.statut === 'ouverte' || p.statut === 'en-cours')
+  const carburants = engin.carburants
   const consoMoy = carburants.length >= 2
     ? (() => {
         const sorted = [...carburants].sort((a, b) => a.kilometrage - b.kilometrage)
@@ -47,252 +102,151 @@ export default function FicheEnginPage() {
       })()
     : null
 
-  const [maintForm, setMaintForm] = useState({ type: 'vidange' as TypeMaintenance, description: '', cout: '', prestataire: '', kilometrage_lors: String(engin.kilometrage), date: new Date().toISOString().split('T')[0] })
-  const [carburantForm, setCarburantForm] = useState({ litres: '', cout: '', kilometrage: String(engin.kilometrage), date: new Date().toISOString().split('T')[0] })
-  const [panneDesc, setPanneDesc] = useState('')
-
-  const handleMaint = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    await new Promise(r => setTimeout(r, 400))
-    addMaintenance({ engin_id: id as string, ...maintForm, cout: parseInt(maintForm.cout) || 0, kilometrage_lors: parseInt(maintForm.kilometrage_lors) || engin.kilometrage })
-    updateEngin(id as string, { statut: 'opérationnel' })
-    toast.success('Entretien enregistré')
-    setMaintOpen(false)
-    setLoading(false)
-  }
-
-  const handleCarburant = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    await new Promise(r => setTimeout(r, 400))
-    addCarburant({ engin_id: id as string, litres: parseFloat(carburantForm.litres), cout: parseInt(carburantForm.cout) || 0, kilometrage: parseInt(carburantForm.kilometrage) || engin.kilometrage, date: carburantForm.date, agent_id: 'user-1' })
-    toast.success('Plein enregistré')
-    setCarburantOpen(false)
-    setLoading(false)
-  }
-
-  const handlePanne = async () => {
-    if (!panneDesc) { toast.error('Décrivez la panne'); return }
-    setLoading(true)
-    await new Promise(r => setTimeout(r, 400))
-    addPanne({ engin_id: id as string, description: panneDesc, date: new Date().toISOString().split('T')[0], statut: 'ouverte' })
-    toast.success('Panne signalée')
-    setPanneOpen(false)
-    setPanneDesc('')
-    setLoading(false)
-  }
-
-  const handleResoudre = (panneId: string) => {
-    if (confirm('Marquer cette panne comme résolue ?')) {
-      updatePanne(panneId, { statut: 'résolue', date_resolution: new Date().toISOString().split('T')[0] })
-      toast.success('Panne résolue')
-    }
-  }
+  const setMF = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setMaintForm(f => ({ ...f, [k]: e.target.value }))
+  const setCF = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setCarburantForm(f => ({ ...f, [k]: e.target.value }))
 
   return (
     <div className="max-w-4xl space-y-4">
       {/* Header */}
-      <div className="flex items-start gap-3">
-        <button onClick={() => router.back()} className="p-1.5 hover:bg-gray-200 rounded-md text-gray-500 mt-1">
-          <ArrowLeft size={18} />
-        </button>
+      <div className="flex items-center gap-3">
+        <button onClick={() => router.back()} className="p-1.5 hover:bg-gray-200 rounded-md text-gray-500"><ArrowLeft size={18} /></button>
         <div className="flex-1">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h2 className="text-xl font-bold text-gray-900">{engin.immatriculation}</h2>
-            <BadgeEngin statut={engin.statut} />
-          </div>
-          <p className="text-sm text-gray-500">{engin.marque} {engin.modele} · {engin.annee} · {TYPE_ENGIN_LABELS[engin.type]}</p>
+          <h2 className="text-base font-semibold text-gray-900">{engin.immatriculation}</h2>
+          <div className="text-xs text-gray-500">{TYPE_ENGIN_LABELS[engin.type as keyof typeof TYPE_ENGIN_LABELS] ?? engin.type}{engin.marque ? ` — ${engin.marque} ${engin.modele ?? ''}` : ''}</div>
         </div>
-        <div className="flex gap-2 flex-shrink-0">
-          <Button size="sm" variant="secondary" onClick={() => setCarburantOpen(true)}>
-            <Fuel size={13} /> Carburant
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => setMaintOpen(true)}>
-            <Wrench size={13} /> Entretien
-          </Button>
-          {engin.statut === 'opérationnel' && (
-            <Button size="sm" variant="danger" onClick={() => setPanneOpen(true)}>
-              <AlertTriangle size={13} /> Panne
-            </Button>
-          )}
-        </div>
+        <BadgeEngin statut={engin.statut as Parameters<typeof BadgeEngin>[0]['statut']} />
       </div>
 
       {/* Pannes actives */}
-      {pannesActives.map(p => (
-        <div key={p.id} className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-start justify-between gap-3">
-          <div className="flex items-start gap-2">
-            <AlertTriangle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <div className="text-sm font-semibold text-red-800">Panne active depuis le {formatDate(p.date)}</div>
-              <div className="text-sm text-red-700 mt-0.5">{p.description}</div>
+      {pannesActives.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-2">
+          {pannesActives.map(p => (
+            <div key={p.id} className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={14} className="text-red-600 mt-0.5 shrink-0" />
+                <div>
+                  <div className="text-sm font-medium text-red-800">{p.description}</div>
+                  <div className="text-xs text-red-500">Depuis le {formatDate(p.date)}</div>
+                </div>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => handleResolvePanne(p.id)}>
+                <CheckCircle size={12} /> Résoudre
+              </Button>
             </div>
-          </div>
-          <Button size="sm" variant="secondary" onClick={() => handleResoudre(p.id)}>
-            <CheckCircle size={13} className="text-emerald-600" /> Résolue
-          </Button>
-        </div>
-      ))}
-
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
-          <div className="text-xs text-gray-500 mb-1">Kilométrage actuel</div>
-          <div className="text-xl font-bold text-gray-900">{engin.kilometrage.toLocaleString()} km</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
-          <div className="text-xs text-gray-500 mb-1">Nombre d'entretiens</div>
-          <div className="text-xl font-bold text-gray-900">{maintenances.length}</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
-          <div className="text-xs text-gray-500 mb-1">Conso. moy. carburant</div>
-          <div className="text-xl font-bold text-gray-900">{consoMoy ? `${consoMoy} L/100km` : '—'}</div>
-        </div>
-      </div>
-
-      {/* Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Entretiens */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900">Historique entretiens</h3>
-            <Button size="sm" variant="ghost" onClick={() => setMaintOpen(true)}>
-              <Wrench size={12} /> + Ajouter
-            </Button>
-          </div>
-          {maintenances.length === 0 ? (
-            <div className="text-center py-6 text-gray-400 text-sm">Aucun entretien enregistré.</div>
-          ) : (
-            <table className="w-full table-dense">
-              <thead>
-                <tr>
-                  <th className="text-left">Date</th>
-                  <th className="text-left">Type</th>
-                  <th className="text-right">Coût</th>
-                </tr>
-              </thead>
-              <tbody>
-                {maintenances.map(m => (
-                  <tr key={m.id}>
-                    <td className="text-xs text-gray-600">{formatDate(m.date)}</td>
-                    <td>
-                      <div className="text-sm font-medium text-gray-800">{m.type}</div>
-                      <div className="text-xs text-gray-400 truncate">{m.description}</div>
-                    </td>
-                    <td className="text-right font-mono text-sm font-semibold">{formatFCFA(m.cout)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {/* Carburant */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900">Suivi carburant</h3>
-            <Button size="sm" variant="ghost" onClick={() => setCarburantOpen(true)}>
-              <Fuel size={12} /> + Plein
-            </Button>
-          </div>
-          {carburants.length === 0 ? (
-            <div className="text-center py-6 text-gray-400 text-sm">Aucun plein enregistré.</div>
-          ) : (
-            <table className="w-full table-dense">
-              <thead>
-                <tr>
-                  <th className="text-left">Date</th>
-                  <th className="text-right">Litres</th>
-                  <th className="text-right">KM</th>
-                  <th className="text-right">Coût</th>
-                </tr>
-              </thead>
-              <tbody>
-                {carburants.map(c => (
-                  <tr key={c.id}>
-                    <td className="text-xs text-gray-600">{formatDate(c.date)}</td>
-                    <td className="text-right font-medium">{c.litres}L</td>
-                    <td className="text-right text-xs text-gray-500">{c.kilometrage.toLocaleString()}</td>
-                    <td className="text-right font-mono text-sm font-semibold">{formatFCFA(c.cout)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-
-      {/* Pannes history */}
-      {pannes.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-900">Historique pannes</h3>
-          </div>
-          <table className="w-full table-dense">
-            <thead>
-              <tr>
-                <th className="text-left">Date</th>
-                <th className="text-left">Description</th>
-                <th className="text-left">Statut</th>
-                <th className="text-left">Résolution</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pannes.map(p => (
-                <tr key={p.id}>
-                  <td className="text-xs text-gray-600">{formatDate(p.date)}</td>
-                  <td className="text-sm text-gray-800">{p.description}</td>
-                  <td>
-                    <span className={cn(
-                      'text-xs px-1.5 py-0.5 rounded font-medium',
-                      p.statut === 'résolue' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700',
-                    )}>
-                      {p.statut}
-                    </span>
-                  </td>
-                  <td className="text-xs text-gray-500">{p.date_resolution ? formatDate(p.date_resolution) : '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          ))}
         </div>
       )}
 
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: 'Kilométrage', val: `${engin.kilometrage.toLocaleString()} km`, icon: Fuel },
+          { label: 'Conso. moy.', val: consoMoy ? `${consoMoy} L/100km` : '—', icon: Fuel },
+          { label: 'Maintenances', val: engin.maintenances.length, icon: Wrench },
+          { label: 'Pannes total', val: engin.pannes.length, icon: AlertTriangle },
+        ].map(s => (
+          <div key={s.label} className="bg-white border border-gray-200 rounded-lg p-3">
+            <div className="text-lg font-bold text-gray-900">{s.val}</div>
+            <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2 flex-wrap">
+        <Button size="sm" variant="secondary" onClick={() => setMaintOpen(true)}><Wrench size={13} /> Entretien</Button>
+        <Button size="sm" variant="secondary" onClick={() => setCarburantOpen(true)}><Fuel size={13} /> Plein carburant</Button>
+        {engin.statut !== 'en-panne' && (
+          <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => setPanneOpen(true)}>
+            <AlertTriangle size={13} /> Signaler panne
+          </Button>
+        )}
+      </div>
+
+      {/* Maintenances */}
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100 font-semibold text-sm text-gray-900">Historique entretiens ({engin.maintenances.length})</div>
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-100">
+            <tr>
+              <th className="text-left text-xs font-semibold text-gray-500 px-4 py-2">Type</th>
+              <th className="text-left text-xs font-semibold text-gray-500 px-4 py-2 hidden sm:table-cell">Description</th>
+              <th className="text-right text-xs font-semibold text-gray-500 px-4 py-2">Coût</th>
+              <th className="text-left text-xs font-semibold text-gray-500 px-4 py-2 hidden md:table-cell">Date</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {engin.maintenances.map(m => (
+              <tr key={m.id}>
+                <td className="px-4 py-2.5 text-sm font-medium text-gray-900 capitalize">{m.type}</td>
+                <td className="px-4 py-2.5 text-xs text-gray-500 hidden sm:table-cell">{m.description ?? '—'}</td>
+                <td className="px-4 py-2.5 text-sm text-right font-medium text-gray-900">{formatFCFA(m.cout)}</td>
+                <td className="px-4 py-2.5 text-xs text-gray-400 hidden md:table-cell">{formatDate(m.date)}</td>
+              </tr>
+            ))}
+            {engin.maintenances.length === 0 && <tr><td colSpan={4} className="text-center text-xs text-gray-400 py-6">Aucun entretien enregistré</td></tr>}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Carburants */}
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100 font-semibold text-sm text-gray-900">Approvisionnements carburant ({engin.carburants.length})</div>
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-100">
+            <tr>
+              <th className="text-right text-xs font-semibold text-gray-500 px-4 py-2">Litres</th>
+              <th className="text-right text-xs font-semibold text-gray-500 px-4 py-2">Coût</th>
+              <th className="text-right text-xs font-semibold text-gray-500 px-4 py-2 hidden sm:table-cell">Km</th>
+              <th className="text-left text-xs font-semibold text-gray-500 px-4 py-2 hidden md:table-cell">Date</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {engin.carburants.map(c => (
+              <tr key={c.id}>
+                <td className="px-4 py-2.5 text-sm text-right">{c.litres} L</td>
+                <td className="px-4 py-2.5 text-sm font-medium text-right text-gray-900">{formatFCFA(c.cout)}</td>
+                <td className="px-4 py-2.5 text-xs text-right text-gray-500 hidden sm:table-cell">{c.kilometrage.toLocaleString()}</td>
+                <td className="px-4 py-2.5 text-xs text-gray-400 hidden md:table-cell">{formatDate(c.date)}</td>
+              </tr>
+            ))}
+            {engin.carburants.length === 0 && <tr><td colSpan={4} className="text-center text-xs text-gray-400 py-6">Aucun plein enregistré</td></tr>}
+          </tbody>
+        </table>
+      </div>
+
       {/* Modals */}
       <Modal open={maintOpen} onClose={() => setMaintOpen(false)} title="Enregistrer un entretien" size="md"
-        footer={<><Button variant="secondary" onClick={() => setMaintOpen(false)}>Annuler</Button><Button variant="primary" form="maint-form" type="submit" loading={loading}>Enregistrer</Button></>}
-      >
-        <form id="maint-form" onSubmit={handleMaint} className="grid grid-cols-2 gap-4">
-          <Select label="Type" value={maintForm.type} onChange={e => setMaintForm(f => ({ ...f, type: e.target.value as TypeMaintenance }))}>
-            {['vidange','pneus','freins','moteur','carrosserie','révision-générale','autre'].map(t => <option key={t} value={t}>{t}</option>)}
+        footer={<><Button variant="secondary" onClick={() => setMaintOpen(false)}>Annuler</Button><Button variant="primary" form="maint-form" type="submit" loading={saving}>Enregistrer</Button></>}>
+        <form id="maint-form" onSubmit={handleMaint} className="space-y-3">
+          <Select label="Type" value={maintForm.type} onChange={setMF('type')}>
+            {['vidange','pneus','freins','moteur','carrosserie','révision-générale','autre'].map(t => <option key={t} value={t} className="capitalize">{t}</option>)}
           </Select>
-          <Input label="Date" type="date" value={maintForm.date} onChange={e => setMaintForm(f => ({ ...f, date: e.target.value }))} required />
-          <Input label="Description" value={maintForm.description} onChange={e => setMaintForm(f => ({ ...f, description: e.target.value }))} className="col-span-2" />
-          <Input label="Prestataire" value={maintForm.prestataire} onChange={e => setMaintForm(f => ({ ...f, prestataire: e.target.value }))} />
-          <Input label="Coût (FCFA)" type="number" value={maintForm.cout} onChange={e => setMaintForm(f => ({ ...f, cout: e.target.value }))} />
-          <Input label="Kilométrage lors" type="number" value={maintForm.kilometrage_lors} onChange={e => setMaintForm(f => ({ ...f, kilometrage_lors: e.target.value }))} />
+          <Textarea label="Description" value={maintForm.description} onChange={setMF('description')} rows={2} />
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Coût (FCFA)" type="number" value={maintForm.cout} onChange={setMF('cout')} min="0" />
+            <Input label="Km lors de l'entretien" type="number" value={maintForm.kilometrageLors} onChange={setMF('kilometrageLors')} min="0" />
+            <Input label="Prestataire" value={maintForm.prestataire} onChange={setMF('prestataire')} />
+            <Input label="Date" type="date" value={maintForm.date} onChange={setMF('date')} required />
+          </div>
         </form>
       </Modal>
 
       <Modal open={carburantOpen} onClose={() => setCarburantOpen(false)} title="Enregistrer un plein" size="sm"
-        footer={<><Button variant="secondary" onClick={() => setCarburantOpen(false)}>Annuler</Button><Button variant="primary" form="car-form" type="submit" loading={loading}>Enregistrer</Button></>}
-      >
-        <form id="car-form" onSubmit={handleCarburant} className="grid grid-cols-2 gap-4">
-          <Input label="Date" type="date" value={carburantForm.date} onChange={e => setCarburantForm(f => ({ ...f, date: e.target.value }))} required />
-          <Input label="Litres" type="number" step="0.1" value={carburantForm.litres} onChange={e => setCarburantForm(f => ({ ...f, litres: e.target.value }))} required />
-          <Input label="Coût total (FCFA)" type="number" value={carburantForm.cout} onChange={e => setCarburantForm(f => ({ ...f, cout: e.target.value }))} />
-          <Input label="Kilométrage" type="number" value={carburantForm.kilometrage} onChange={e => setCarburantForm(f => ({ ...f, kilometrage: e.target.value }))} required />
+        footer={<><Button variant="secondary" onClick={() => setCarburantOpen(false)}>Annuler</Button><Button variant="primary" form="carb-form" type="submit" loading={saving}>Enregistrer</Button></>}>
+        <form id="carb-form" onSubmit={handleCarburant} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Litres" type="number" value={carburantForm.litres} onChange={setCF('litres')} min="0" step="0.1" required />
+            <Input label="Coût (FCFA)" type="number" value={carburantForm.cout} onChange={setCF('cout')} min="0" required />
+            <Input label="Kilométrage actuel" type="number" value={carburantForm.kilometrage} onChange={setCF('kilometrage')} min="0" required />
+            <Input label="Date" type="date" value={carburantForm.date} onChange={setCF('date')} required />
+          </div>
         </form>
       </Modal>
 
-      <Modal open={panneOpen} onClose={() => setPanneOpen(false)} title="Signaler une panne" size="sm"
-        footer={<><Button variant="secondary" onClick={() => setPanneOpen(false)}>Annuler</Button><Button variant="danger" onClick={handlePanne} loading={loading}>Signaler</Button></>}
-      >
-        <div className="space-y-3">
-          <p className="text-sm text-gray-600">L'engin passera au statut <strong>En panne</strong>.</p>
-          <Textarea label="Description de la panne" value={panneDesc} onChange={e => setPanneDesc(e.target.value)} placeholder="Ex : Fumée noire, moteur qui chauffe…" required />
-        </div>
+      <Modal open={panneOpen} onClose={() => { setPanneOpen(false); setPanneDesc('') }} title="Signaler une panne" size="sm"
+        footer={<><Button variant="secondary" onClick={() => { setPanneOpen(false); setPanneDesc('') }}>Annuler</Button><Button variant="danger" loading={saving} onClick={handlePanne}>Signaler</Button></>}>
+        <Input label="Description de la panne" value={panneDesc} onChange={e => setPanneDesc(e.target.value)} placeholder="Moteur, freins, pneu…" required />
       </Modal>
     </div>
   )
