@@ -8,6 +8,17 @@ Infrastructure adaptée de **izikit** (faratasn-pixel/izikit) : Next.js 16 + Pri
 
 ---
 
+## Déploiement
+
+- **GitHub** : `Tkatansaou/fluxdechets` (privé) — branche `main`
+- **Vercel** : projet `wasteflow-dsm` sous `tchaa-katansaous-projects`
+- **Domaine** : `https://www.fluxdechets.com` (lié au projet Vercel)
+- **Redéployer** : `vercel --prod` depuis la racine du projet
+- **Variables d'env** : toutes configurées sur Vercel (JWT_SECRET, DATABASE_URL, ENCRYPTION_KEY, RESEND, UPSTASH, GOOGLE_MAPS)
+- **Documentation IA alternative** : `AGENTS.md` (équivalent CLAUDE.md pour Codex/autres outils)
+
+---
+
 ## Stack
 
 - **App** : Next.js 16 App Router, React 19, TypeScript strict
@@ -60,6 +71,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 - **`src/lib/server/middleware.ts`** — `requireAuth`, `requireAdmin`, `requireOrgAccess`
 - **`src/lib/api.ts`** — Client fetch wrapper (CSRF auto, refresh auto sur 401)
 - **`src/contexts/AuthContext.tsx`** — React context `useAuth()`, `useUser()`
+- **`src/proxy.ts`** — Middleware de protection des routes (cookies prefix, routes publiques vs protégées)
 
 ### Pattern pages client
 
@@ -110,7 +122,7 @@ Configurer `BICTORYS_API_KEY` + `BICTORYS_PRIVATE_KEY` + `BICTORYS_WEBHOOK_SECRE
 
 Sans ces vars : `/api/pay/[token]` fonctionne en **mode simulation** (succès simulé, pas d'argent réel). Utile pour les démos.
 
-Le webhook Bictorys (`POST /api/webhooks/bictorys`) doit être configuré dans le dashboard Bictorys pour pointer vers `https://your-domain.com/api/webhooks/bictorys`.
+Le webhook Bictorys (`POST /api/webhooks/bictorys`) doit être configuré dans le dashboard Bictorys pour pointer vers `https://www.fluxdechets.com/api/webhooks/bictorys`.
 
 ### Multi-tenant
 
@@ -136,6 +148,16 @@ Organization (1) ──── DelegataireProfil (1)
                            │
                        Tournee[]
 ```
+
+---
+
+## SEO & responsive
+
+- Metadata complète dans `src/app/layout.tsx` : title template, description, keywords, OpenGraph, Twitter card, JSON-LD `SoftwareApplication`
+- Image OG générée dynamiquement via `src/app/opengraph-image.tsx` (1200×630, edge runtime)
+- `src/app/robots.ts` — protège `/dashboard`, `/api/*` et toutes les routes app de l'indexation
+- `src/app/sitemap.ts` — expose `/`, `/login`, `/signup`
+- Navigation responsive : `Sidebar` (`hidden md:flex`) + `MobileNav` bottom bar (`md:hidden`, `h-14`) + `pb-14 md:pb-0` sur le `<main>`
 
 ---
 
