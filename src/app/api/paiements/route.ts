@@ -26,22 +26,32 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const mois = searchParams.get('mois')
   const zoneId = searchParams.get('zoneId')
 
-  const paiements = await prisma.paiement.findMany({
-    where: {
-      abonne: { zone: { orgId: auth.orgId } },
-      ...(mois ? { moisConcerne: mois } : {}),
-      ...(zoneId ? { abonne: { zoneId } } : {}),
-      statut: 'validé',
-    },
-    include: {
-      abonne: { select: { nom: true, prenom: true, zone: { select: { id: true, nom: true } } } },
-      agent: { select: { name: true } },
-    },
-    orderBy: { date: 'desc' },
-    take: 200,
-  })
+  const page = parseInt(searchParams.get('page') ?? '1')
+  const limit = Math.min(parseInt(searchParams.get('limit') ?? '100'), 500)
+  const skip = (page - 1) * limit
 
-  return NextResponse.json({ paiements })
+  const where = {
+    abonne: { zone: { orgId: auth.orgId } },
+    ...(mois ? { moisConcerne: mois } : {}),
+    ...(zoneId ? { abonne: { zoneId } } : {}),
+    statut: 'validé',
+  }
+
+  const [paiements, total] = await Promise.all([
+    prisma.paiement.findMany({
+      where,
+      include: {
+        abonne: { select: { nom: true, prenom: true, zone: { select: { id: true, nom: true } } } },
+        agent: { select: { name: true } },
+      },
+      orderBy: { date: 'desc' },
+      take: limit,
+      skip,
+    }),
+    prisma.paiement.count({ where }),
+  ])
+
+  return NextResponse.json({ paiements, total, page, limit })
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {

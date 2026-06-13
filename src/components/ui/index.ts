@@ -1,4 +1,5 @@
 export { Button } from './Button'
+export { EmptyState } from './EmptyState'
 export { Badge, BadgeAbonne, BadgeEngin, BadgeTournee } from './Badge'
 export { Card, CardHeader } from './Card'
 export { Input, Select, Textarea } from './Input'

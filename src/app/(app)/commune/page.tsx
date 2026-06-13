@@ -5,6 +5,7 @@ import { Landmark, Users, TrendingUp, Truck, MapPin, Eye } from 'lucide-react'
 import { api } from '@/lib/api'
 import { cn, formatDate, formatFCFA } from '@/lib/utils'
 import toast from 'react-hot-toast'
+import type { ZoneWithCount, EnginLite } from '@/types/api'
 
 interface Profil {
   commune: string; telephone: string | null; adresse: string | null; region: string | null
@@ -16,8 +17,6 @@ interface Kpis {
   tauxRecouvrement: number; tauxCollecte: number
   tourneesTotal: number; tourneesTerminees: number
 }
-interface Zone { id: string; nom: string; frequenceCollecte: string; _count: { abonnes: number } }
-interface Engin { id: string; immatriculation: string; type: string; statut: string }
 interface TourneeRecente { id: string; date: string; statut: string; zone: { nom: string } }
 
 const STATUT_ENGIN: Record<string, { label: string; cls: string }> = {
@@ -37,8 +36,8 @@ export default function CommunePage() {
   const [org, setOrg] = useState<{ name: string; slug: string } | null>(null)
   const [profil, setProfil] = useState<Profil | null>(null)
   const [kpis, setKpis] = useState<Kpis | null>(null)
-  const [zones, setZones] = useState<Zone[]>([])
-  const [engins, setEngins] = useState<Engin[]>([])
+  const [zones, setZones] = useState<ZoneWithCount[]>([])
+  const [engins, setEngins] = useState<EnginLite[]>([])
   const [tournees, setTournees] = useState<TourneeRecente[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'synthese' | 'zones' | 'flotte' | 'activite'>('synthese')
@@ -50,8 +49,8 @@ export default function CommunePage() {
         org: { name: string; slug: string }
         profil: Profil | null
         kpis: Kpis
-        zones: Zone[]
-        engins: Engin[]
+        zones: ZoneWithCount[]
+        engins: EnginLite[]
         tourneesRecentes: TourneeRecente[]
       }>('/api/commune')
       setOrg(res.org)

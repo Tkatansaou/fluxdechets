@@ -187,6 +187,32 @@ export default function PaiementsPage() {
               <option value="espèces">Cash</option>
             </select>
           </div>
+          {/* Stats filtrées */}
+          {(() => {
+            const totalMontant = filtered.reduce((sum, p) => sum + p.montant, 0)
+            const nbEspeces = filtered.filter(p => p.moyen === 'espèces').length
+            const nbMobileMoney = filtered.filter(p => p.moyen === 'mobile-money').length
+            return (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-4 py-3 border-b border-gray-100">
+                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
+                  <div className="text-2xl font-bold text-gray-900">{formatFCFA(totalMontant)}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Total encaissé</div>
+                </div>
+                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
+                  <div className="text-2xl font-bold text-gray-900">{filtered.length}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Paiements</div>
+                </div>
+                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
+                  <div className="text-2xl font-bold text-gray-700">{nbEspeces}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Espèces</div>
+                </div>
+                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
+                  <div className="text-2xl font-bold text-blue-600">{nbMobileMoney}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Mobile Money</div>
+                </div>
+              </div>
+            )
+          })()}
           <table className="w-full table-dense">
             <thead>
               <tr>

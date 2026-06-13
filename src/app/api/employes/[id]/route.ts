@@ -6,13 +6,16 @@ import { requireAuth } from '@/lib/server/middleware'
 import { verifyCsrf } from '@/lib/server/auth'
 import prisma from '@/lib/server/prisma'
 
+const POSTES = ['chauffeur', 'agent-recouvrement', 'agent-collecte', 'superviseur', 'comptable', 'technicien', 'autre'] as const
+const STATUTS = ['actif', 'inactif', 'congé', 'suspendu'] as const
+
 const updateSchema = z.object({
   nom: z.string().min(1).max(100).optional(),
   prenom: z.string().min(1).max(100).optional(),
   telephone: z.string().min(8).max(30).optional(),
   email: z.string().email().optional().or(z.literal('')),
-  poste: z.enum(['chauffeur', 'agent-recouvrement', 'agent-collecte', 'superviseur', 'comptable', 'technicien', 'autre']).optional(),
-  statut: z.enum(['actif', 'inactif', 'congé', 'suspendu']).optional(),
+  poste: z.enum(POSTES).optional(),
+  statut: z.enum(STATUTS).optional(),
   dateEmbauche: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   salaire: z.number().int().min(0).optional(),
   zoneId: z.string().nullable().optional(),

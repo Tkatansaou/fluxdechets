@@ -24,25 +24,36 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const statut = searchParams.get('statut')
   const search = searchParams.get('q')
 
-  const abonnes = await prisma.abonne.findMany({
-    where: {
-      zone: { orgId: auth.orgId },
-      ...(zoneId ? { zoneId } : {}),
-      ...(statut && statut !== 'tous' ? { statut } : {}),
-      ...(search ? {
-        OR: [
-          { nom: { contains: search, mode: 'insensitive' } },
-          { prenom: { contains: search, mode: 'insensitive' } },
-          { telephone: { contains: search } },
-          { adresse: { contains: search, mode: 'insensitive' } },
-        ],
-      } : {}),
-    },
-    include: { zone: { select: { id: true, nom: true } } },
-    orderBy: [{ statut: 'asc' }, { nom: 'asc' }],
-  })
+  const page = parseInt(searchParams.get('page') ?? '1')
+  const limit = Math.min(parseInt(searchParams.get('limit') ?? '50'), 200)
+  const skip = (page - 1) * limit
 
-  return NextResponse.json({ abonnes })
+  const where = {
+    zone: { orgId: auth.orgId },
+    ...(zoneId ? { zoneId } : {}),
+    ...(statut && statut !== 'tous' ? { statut } : {}),
+    ...(search ? {
+      OR: [
+        { nom: { contains: search, mode: 'insensitive' as const } },
+        { prenom: { contains: search, mode: 'insensitive' as const } },
+        { telephone: { contains: search } },
+        { adresse: { contains: search, mode: 'insensitive' as const } },
+      ],
+    } : {}),
+  }
+
+  const [abonnes, total] = await Promise.all([
+    prisma.abonne.findMany({
+      where,
+      include: { zone: { select: { id: true, nom: true } } },
+      orderBy: [{ statut: 'asc' }, { nom: 'asc' }],
+      take: limit,
+      skip,
+    }),
+    prisma.abonne.count({ where }),
+  ])
+
+  return NextResponse.json({ abonnes, total, page, limit })
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
