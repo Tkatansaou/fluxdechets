@@ -90,6 +90,13 @@ export default function AbonnesPage() {
   const [importLoading, setImportLoading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
+  // Charger les zones une seule fois
+  useEffect(() => {
+    api<{ zones: Zone[] }>('/api/zones')
+      .then(r => setZones(r.zones ?? []))
+      .catch(() => { /* silencieux */ })
+  }, [])
+
   const load = useCallback(async () => {
     setLoading(true)
     try {
@@ -97,18 +104,14 @@ export default function AbonnesPage() {
       if (search) params.set('q', search)
       if (filterZone !== 'toutes') params.set('zoneId', filterZone)
       if (filterStatut !== 'tous') params.set('statut', filterStatut)
-      const [abData, zoneData] = await Promise.all([
-        api<{ abonnes: Abonne[] }>(`/api/abonnes?${params}`),
-        zones.length ? Promise.resolve({ zones }) : api<{ zones: Zone[] }>('/api/zones'),
-      ])
+      const abData = await api<{ abonnes: Abonne[] }>(`/api/abonnes?${params}`)
       setAbonnes(abData.abonnes ?? [])
-      if (!zones.length) setZones((zoneData as { zones: Zone[] }).zones ?? [])
     } catch {
       toast.error('Erreur de chargement')
     } finally {
       setLoading(false)
     }
-  }, [search, filterStatut, filterZone, zones.length])
+  }, [search, filterStatut, filterZone])
 
   useEffect(() => { load() }, [load])
 

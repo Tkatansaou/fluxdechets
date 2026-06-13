@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ScanSearch, Search, Globe, UserPlus, AlertCircle, CheckCircle2, Loader2, ExternalLink, Phone, MapPin } from 'lucide-react'
+import { ScanSearch, Search, Globe, UserPlus, AlertCircle, CheckCircle2, ExternalLink, Phone, MapPin } from 'lucide-react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
@@ -48,7 +48,7 @@ interface Zone {
 function ImportModal({
   prospect,
   zones,
-  onClose,
+  onClose: _onClose,
   onSuccess,
 }: {
   prospect: Prospect
@@ -63,7 +63,7 @@ function ImportModal({
     adresse: prospect.adresse ?? '',
     zoneId: zones[0]?.id ?? '',
   })
-  const [loading, setLoading] = useState(false)
+  const [_loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

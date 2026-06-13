@@ -1,5 +1,4 @@
-import { cn } from '@/lib/utils'
-import { getStatutAbonneStyle, getStatutEnginStyle, getStatutTourneeStyle } from '@/lib/utils'
+import { cn, getStatutAbonneStyle, getStatutEnginStyle, getStatutTourneeStyle } from '@/lib/utils'
 import { STATUT_ABONNE_LABELS, STATUT_ENGIN_LABELS, STATUT_TOURNEE_LABELS } from '@/lib/constants'
 import type { StatutAbonne, StatutEngin, StatutTournee } from '@/types'
 

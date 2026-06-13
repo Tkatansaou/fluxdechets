@@ -95,4 +95,21 @@ export const MOTIF_NON_EFFECTUE_LABELS: Record<string, string> = {
   'autre': 'Autre',
 }
 
+export const POSTE_LABELS: Record<string, string> = {
+  'chauffeur': 'Chauffeur',
+  'agent-recouvrement': 'Agent de recouvrement',
+  'agent-collecte': 'Agent de collecte',
+  'superviseur': 'Superviseur',
+  'comptable': 'Comptable',
+  'technicien': 'Technicien',
+  'autre': 'Autre',
+}
+
+export const STATUT_EMPLOYE_LABELS: Record<string, string> = {
+  'actif': 'Actif',
+  'inactif': 'Inactif',
+  'congé': 'En congé',
+  'suspendu': 'Suspendu',
+}
+
 export const JOURS_SEMAINE = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']

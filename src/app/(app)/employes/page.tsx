@@ -7,17 +7,8 @@ import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { cn, formatFCFA } from '@/lib/utils'
+import { POSTE_LABELS } from '@/lib/constants'
 import toast from 'react-hot-toast'
-
-const POSTE_LABELS: Record<string, string> = {
-  'chauffeur': 'Chauffeur',
-  'agent-recouvrement': 'Agent recouvrement',
-  'agent-collecte': 'Agent collecte',
-  'superviseur': 'Superviseur',
-  'comptable': 'Comptable',
-  'technicien': 'Technicien',
-  'autre': 'Autre',
-}
 
 const STATUT_COLORS: Record<string, string> = {
   'actif': 'bg-emerald-50 text-emerald-700',

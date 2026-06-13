@@ -47,12 +47,9 @@ export default function TerrainPage() {
     if (!id) { setLoading(false); return }
     setLoading(true)
     try {
-      const [tRes, _abRes] = await Promise.all([
-        api<{ tournee: TourneeDetailed }>(`/api/tournees/${id}`),
-        api<{ abonnes: AbonneLite[] }>(`/api/abonnes?zoneId=placeholder`), // placeholder — overridden below
-      ])
+      const tRes = await api<{ tournee: TourneeDetailed }>(`/api/tournees/${id}`)
       setTournee(tRes.tournee)
-      const aRes = await api<{ abonnes: AbonneLite[] }>(`/api/abonnes?zoneId=${tRes.tournee.zone.id}&limit=200`)
+      const aRes = await api<{ abonnes: AbonneLite[] }>(`/api/abonnes?zoneId=${tRes.tournee.zone.id}`)
       setAbonnes(aRes.abonnes ?? [])
     } catch {
       toast.error('Tournée introuvable')

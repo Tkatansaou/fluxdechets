@@ -45,6 +45,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const { trimestre, annee } = body.data
   const mois = trimestreMois(trimestre, annee)
+  const debutTrimestre = new Date(`${annee}-${mois[0].slice(5)}-01`)
+  const finTrimestre = new Date(debutTrimestre)
+  finTrimestre.setMonth(debutTrimestre.getMonth() + 3)
+  finTrimestre.setMilliseconds(-1)
 
   // Compute report data from DB
   const [abonnesActifs, paiements, tournees, engins, pannes] = await Promise.all([
@@ -56,7 +60,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       select: { montant: true, moyen: true, moisConcerne: true },
     }),
     prisma.tournee.findMany({
-      where: { zone: { orgId: auth.orgId }, date: { gte: new Date(`${annee}-${mois[0].slice(5)}-01`), lte: new Date(`${annee}-${mois[2].slice(5)}-31`) } },
+      where: { zone: { orgId: auth.orgId }, date: { gte: debutTrimestre, lte: finTrimestre } },
       select: { statut: true },
     }),
     prisma.engin.findMany({
@@ -64,7 +68,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       select: { id: true, immatriculation: true, statut: true, kilometrage: true },
     }),
     prisma.panneEngin.findMany({
-      where: { engin: { orgId: auth.orgId }, date: { gte: new Date(`${annee}-${mois[0].slice(5)}-01`) } },
+      where: { engin: { orgId: auth.orgId }, date: { gte: debutTrimestre } },
       select: { description: true, statut: true, coutReparation: true },
     }),
   ])
