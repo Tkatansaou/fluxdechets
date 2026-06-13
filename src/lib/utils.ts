@@ -53,7 +53,7 @@ export function getMoisCourt(moisStr: string): string {
   return MOIS_COURTS[idx] ?? moisStr
 }
 
-export function getRecouvrementColor(taux: number, objectif = 80): string {
+export function getRecouvrementColor(taux: number, _objectif = 80): string {
   if (taux >= SEUIL_RECOUVREMENT_VERT) return 'text-emerald-600'
   if (taux >= SEUIL_RECOUVREMENT_ORANGE) return 'text-amber-600'
   return 'text-red-600'

@@ -1,3 +1,5 @@
+// Next.js 16 route protection (middleware renommé proxy.ts dans Next.js 16+)
+// Ce fichier est détecté automatiquement par Next.js comme middleware de routage.
 import { NextRequest, NextResponse } from 'next/server'
 
 const COOKIE_PREFIX = process.env.NEXT_PUBLIC_COOKIE_PREFIX ?? 'wf'

@@ -14,7 +14,7 @@ function log(level: Level, message: string, meta?: Record<string, unknown>) {
   } else if (level === 'warn') {
     console.warn(JSON.stringify(entry))
   } else {
-    console.log(JSON.stringify(entry))
+    console.warn(JSON.stringify(entry))
   }
 }
 

@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoggingOut(true)
     try {
       await api('/api/auth/logout', { method: 'POST' })
-    } catch {}
+    } catch { /* logout graceful — on nettoie quand même */ }
     clearCsrfToken()
     setUser(null)
     setLoggingOut(false)

@@ -8,7 +8,7 @@ export async function GET(): Promise<NextResponse> {
   try {
     await prisma.$queryRaw`SELECT 1`
     dbOk = true
-  } catch {}
+  } catch { /* DB indisponible — dbOk reste false */ }
 
   const ok = dbOk
   return NextResponse.json({ ok, db: dbOk, time: new Date().toISOString() }, { status: ok ? 200 : 503 })

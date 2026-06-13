@@ -40,18 +40,24 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     ? Math.round((tourneesTerminees.length / tourneesNonAnnulees.length) * 100)
     : 100
 
-  // Recouvrement par mois (6 derniers mois)
+  // Recouvrement par mois (6 derniers mois) — requête groupée unique
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+  const paiementsGrouped = await prisma.paiement.groupBy({
+    by: ['moisConcerne'],
+    where: {
+      abonne: { zone: { orgId: auth.orgId } },
+      moisConcerne: { gte: sixMonthsAgo.toISOString().slice(0, 7) },
+      statut: 'validé',
+    },
+    _count: { moisConcerne: true },
+  })
+  const paiementsMap = new Map(paiementsGrouped.map(g => [g.moisConcerne, g._count.moisConcerne]))
+
   const months = []
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     const moisKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const count = await prisma.paiement.count({
-      where: {
-        abonne: { zone: { orgId: auth.orgId } },
-        moisConcerne: moisKey,
-        statut: 'validé',
-      },
-    })
+    const count = paiementsMap.get(moisKey) ?? 0
     const taux = abonnesActifs > 0 ? Math.min(Math.round((count / abonnesActifs) * 100), 100) : 0
     const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
     months.push({ mois: MOIS[d.getMonth()], taux })

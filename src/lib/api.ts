@@ -146,7 +146,7 @@ export async function api<T = unknown>(path: string, options: ApiOptions = {}): 
             errorMessage =
               response.status >= 500 ? 'Serveur temporairement indisponible' : `Erreur ${response.status}`
           }
-        } catch {}
+        } catch { /* JSON parse failed — errorMessage already set above */ }
         throw new ApiError(response.status, errorMessage, errorBody)
       }
 

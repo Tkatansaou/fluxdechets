@@ -14,10 +14,6 @@ const createSchema = z.object({
   notes: z.string().optional(),
 })
 
-const updateSchema = z.object({
-  statut: z.enum(['planifiée', 'en-cours', 'terminée', 'annulée']).optional(),
-  notes: z.string().optional(),
-})
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const auth = await requireAuth(req)

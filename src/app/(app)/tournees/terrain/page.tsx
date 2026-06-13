@@ -47,7 +47,7 @@ export default function TerrainPage() {
     if (!id) { setLoading(false); return }
     setLoading(true)
     try {
-      const [tRes, abRes] = await Promise.all([
+      const [tRes, _abRes] = await Promise.all([
         api<{ tournee: TourneeDetailed }>(`/api/tournees/${id}`),
         api<{ abonnes: AbonneLite[] }>(`/api/abonnes?zoneId=placeholder`), // placeholder — overridden below
       ])
