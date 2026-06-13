@@ -11,12 +11,7 @@ import { Input, Select } from '@/components/ui/Input'
 import { cn, formatDate } from '@/lib/utils'
 import { TYPE_ENGIN_LABELS } from '@/lib/constants'
 import toast from 'react-hot-toast'
-
-interface Engin {
-  id: string; immatriculation: string; type: string; marque: string | null
-  modele: string | null; annee: number | null; statut: string
-  kilometrage: number; dateAcquisition: string | null; createdAt: string
-}
+import type { EnginLite as Engin } from '@/types/api'
 
 export default function EnginsPage() {
   const router = useRouter()

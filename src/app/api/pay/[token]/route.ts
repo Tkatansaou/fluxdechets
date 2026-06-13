@@ -7,6 +7,7 @@ import prisma from '@/lib/server/prisma'
 import { randomBytes } from 'node:crypto'
 import { MONTANT_REDEVANCE } from '@/lib/constants'
 import { initMonerooPayment, isMonerooConfigured } from '@/lib/server/moneroo'
+import { logger } from '@/lib/server/logger'
 
 const schema = z.object({
   operateur: z.enum(['tmoney', 'flooz', 'moov']),
@@ -120,7 +121,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
         statut: 'en-attente',
       })
     } catch (err) {
-      console.error('Moneroo error:', err)
+      logger.error('Moneroo error', { err })
       // Fall through to Bictorys or demo
     }
   }
@@ -193,7 +194,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
         })
       }
     } catch (err) {
-      console.error('Bictorys error:', err)
+      logger.error('Bictorys error', { err })
     }
   }
 

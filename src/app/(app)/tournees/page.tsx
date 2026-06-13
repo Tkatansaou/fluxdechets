@@ -75,6 +75,17 @@ export default function TourneesPage() {
 
   useEffect(() => { load() }, [load])
 
+  const handleStatut = async (tourneeId: string, newStatut: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      await api(`/api/tournees/${tourneeId}`, { method: 'PATCH', body: { statut: newStatut } })
+      toast.success(newStatut === 'terminée' ? 'Tournée terminée' : 'Tournée annulée')
+      load()
+    } catch {
+      toast.error('Erreur de mise à jour')
+    }
+  }
+
   const handleCreate = async () => {
     if (!form.zoneId || !form.enginId || !form.chauffeurId || !form.date) { toast.error('Remplissez tous les champs'); return }
     setSaving(true)
@@ -160,6 +171,24 @@ export default function TourneesPage() {
                           <BadgeTournee statut={t.statut as Parameters<typeof BadgeTournee>[0]['statut']} />
                         </div>
                         <div className="text-xs text-gray-400 mt-0.5">{t._count.marquages} marquages</div>
+                        {(t.statut === 'planifiée' || t.statut === 'en-cours') && (
+                          <div className="flex gap-1 mt-1.5">
+                            <button
+                              className="text-xs text-emerald-600 hover:bg-emerald-50 px-1.5 py-0.5 rounded transition-colors"
+                              onClick={(e) => handleStatut(t.id, 'terminée', e)}
+                            >
+                              ✓ Terminer
+                            </button>
+                            {t.statut === 'planifiée' && (
+                              <button
+                                className="text-xs text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded transition-colors"
+                                onClick={(e) => handleStatut(t.id, 'annulée', e)}
+                              >
+                                × Annuler
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
