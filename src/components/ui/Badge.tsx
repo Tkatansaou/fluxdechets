@@ -1,6 +1,5 @@
 import { cn, getStatutAbonneStyle, getStatutEnginStyle, getStatutTourneeStyle } from '@/lib/utils'
 import { STATUT_ABONNE_LABELS, STATUT_ENGIN_LABELS, STATUT_TOURNEE_LABELS } from '@/lib/constants'
-import type { StatutAbonne, StatutEngin, StatutTournee } from '@/types'
 
 interface BadgeProps {
   children: React.ReactNode
@@ -29,7 +28,7 @@ export function Badge({ children, className, variant = 'default' }: BadgeProps) 
   )
 }
 
-export function BadgeAbonne({ statut }: { statut: StatutAbonne }) {
+export function BadgeAbonne({ statut }: { statut: string }) {
   return (
     <span className={cn(
       'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border',
@@ -40,7 +39,7 @@ export function BadgeAbonne({ statut }: { statut: StatutAbonne }) {
   )
 }
 
-export function BadgeEngin({ statut }: { statut: StatutEngin }) {
+export function BadgeEngin({ statut }: { statut: string }) {
   return (
     <span className={cn(
       'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border',
@@ -51,7 +50,7 @@ export function BadgeEngin({ statut }: { statut: StatutEngin }) {
   )
 }
 
-export function BadgeTournee({ statut }: { statut: StatutTournee }) {
+export function BadgeTournee({ statut }: { statut: string }) {
   return (
     <span className={cn(
       'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border',

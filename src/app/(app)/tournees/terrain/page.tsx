@@ -10,7 +10,7 @@ import { Select } from '@/components/ui/Input'
 import { cn } from '@/lib/utils'
 import { MOTIF_NON_EFFECTUE_LABELS } from '@/lib/constants'
 import toast from 'react-hot-toast'
-import type { MotifNonEffectue } from '@/types'
+
 
 interface AbonneLite { id: string; nom: string; prenom: string; telephone: string; adresse: string | null }
 interface Marquage { id: string; abonneId: string; statut: string; motif: string | null; motifDetail: string | null; heureMarquage: string | null }
@@ -31,7 +31,7 @@ export default function TerrainPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
   const [motifModal, setMotifModal] = useState<string | null>(null)
-  const [motif, setMotif] = useState<MotifNonEffectue>('autre')
+  const [motif, setMotif] = useState<string>('autre')
   const [motifDetail, setMotifDetail] = useState('')
 
   const loadList = useCallback(async () => {
@@ -63,7 +63,7 @@ export default function TerrainPage() {
     if (selectedId) loadTournee(selectedId)
   }, [selectedId, loadTournee])
 
-  const marquer = async (abonneId: string, statut: 'effectué' | 'non-effectué', motifVal?: MotifNonEffectue, motifDetailVal?: string) => {
+  const marquer = async (abonneId: string, statut: 'effectué' | 'non-effectué', motifVal?: string, motifDetailVal?: string) => {
     if (!selectedId) return
     setSaving(abonneId)
     try {
@@ -177,7 +177,7 @@ export default function TerrainPage() {
                     <div className="text-sm font-medium text-gray-900 truncate">{ab.prenom} {ab.nom}</div>
                     {ab.adresse && <div className="text-xs text-gray-400 truncate">{ab.adresse}</div>}
                     {m?.statut === 'non-effectué' && m.motif && (
-                      <div className="text-xs text-red-600 mt-0.5">{MOTIF_NON_EFFECTUE_LABELS[m.motif as MotifNonEffectue] ?? m.motif}</div>
+                      <div className="text-xs text-red-600 mt-0.5">{MOTIF_NON_EFFECTUE_LABELS[m.motif ?? ''] ?? m.motif}</div>
                     )}
                   </div>
                   {isTerminee ? (
@@ -220,7 +220,7 @@ export default function TerrainPage() {
       <Modal open={!!motifModal} onClose={() => setMotifModal(null)} title="Motif du non-passage" size="sm"
         footer={<><Button variant="secondary" onClick={() => setMotifModal(null)}>Annuler</Button><Button variant="danger" loading={saving === motifModal} onClick={handleNonEffectue}>Confirmer</Button></>}>
         <div className="space-y-3">
-          <Select label="Motif" value={motif} onChange={e => setMotif(e.target.value as MotifNonEffectue)}>
+          <Select label="Motif" value={motif} onChange={e => setMotif(e.target.value)}>
             {Object.entries(MOTIF_NON_EFFECTUE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </Select>
           <input
