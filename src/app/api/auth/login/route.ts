@@ -37,7 +37,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, email: true, passwordHash: true, status: true, tokenVersion: true, name: true },
+    select: { id: true, email: true, passwordHash: true, status: true, tokenVersion: true, name: true, role: true },
   })
 
   // Constant-time hash comparison to prevent timing attacks
@@ -68,11 +68,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   logger.info('login_ok', { userId: user.id })
 
+  // SUPERADMIN check: if user.role is SUPERADMIN, use it regardless of membership
+  const effectiveRole = user.role === 'SUPERADMIN'
+    ? 'SUPERADMIN'
+    : membership.role === 'OWNER' ? 'ADMIN' : membership.role
+
   const { csrfToken } = await issueAuthCookies(
     user.id,
     user.email,
     membership.organizationId,
-    membership.role === 'OWNER' ? 'ADMIN' : membership.role,
+    effectiveRole,
     user.tokenVersion,
   )
 
