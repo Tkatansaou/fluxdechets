@@ -22,7 +22,7 @@ export function useSSE(enabled = true) {
   const [kpis, setKpis] = useState<SseKpis | null>(null)
   const [connected, setConnected] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const connect = useCallback(() => {
     if (!enabled || eventSourceRef.current) return
