@@ -1,0 +1,62 @@
+# WasteFlow — Docker Compose
+# Usage:
+#   docker compose --profile dev up -d   (dev local avec DB PostgreSQL)
+#   docker compose up -d                  (prod avec Neon externe)
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # PostgreSQL locale (dev uniquement — en production utiliser Neon)
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: wasteflow
+      POSTGRES_PASSWORD: wasteflow_dev
+      POSTGRES_DB: wasteflow
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    profiles:
+      - dev
+
+  # Backup automatique (dev uniquement)
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    profiles:
+      - dev
+    depends_on:
+      - db
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./backups:/backups
+    environment:
+      DATABASE_URL: "postgresql://wasteflow:wasteflow_dev@db:5432/wasteflow"
+    command: >
+      sh -c "
+      echo '0 3 * * * /scripts/backup.sh /backups' > /etc/crontabs/root &&
+      crond -f -l 2
+      "
+
+volumes:
+  pgdata:

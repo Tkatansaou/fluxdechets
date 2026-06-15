@@ -7,7 +7,7 @@ const CSRF_COOKIE_NAME = `${COOKIE_PREFIX}-csrf`
 
 export const BACKEND_URL = API_URL
 
-function getCsrfToken(): string | null {
+export function getCsrfToken(): string | null {
   if (typeof window === 'undefined') return null
   const escaped = CSRF_COOKIE_NAME.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${escaped}=([^;]*)`))

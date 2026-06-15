@@ -27,6 +27,7 @@ const securityHeaders = [
 
 const config: NextConfig = {
   reactStrictMode: true,
+  output: process.env.DOCKER_BUILD === '1' ? 'standalone' : undefined,
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },
