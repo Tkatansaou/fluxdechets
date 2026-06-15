@@ -46,7 +46,7 @@ export function ZoneMap({ zones, center = [6.1725, 1.2318], zoom = 12, className
     setMounted(true)
     // Fix Leaflet default icon issue with bundlers
     import('leaflet').then(L => {
-      delete (L.Icon.Default.prototype as Record<string, unknown>)._getIconUrl
+      delete (L.Icon.Default.prototype as any)._getIconUrl
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9/dist/images/marker-icon-2x.png',
         iconUrl: 'https://unpkg.com/leaflet@1.9/dist/images/marker-icon.png',
