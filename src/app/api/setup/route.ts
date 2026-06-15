@@ -24,7 +24,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const existingUser = await prisma.user.findUnique({
       where: { email },
-      include: { organizationMembers: true },
+      include: { memberships: true },
     })
 
     if (existingUser) {
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       })
 
       // S'assurer qu'il a une organisation
-      let orgId = existingUser.organizationMembers[0]?.organizationId
+      let orgId = existingUser.memberships[0]?.organizationId
       if (!orgId) {
         const org = await prisma.organization.create({
           data: {
