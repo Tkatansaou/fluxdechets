@@ -3,7 +3,7 @@ export const runtime = 'nodejs'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  return NextResponse.json({
+  const manifest = {
     name: 'WasteFlow — Pilotage DSP Déchets Solides',
     short_name: 'WasteFlow',
     description:
@@ -28,5 +28,8 @@ export async function GET() {
     categories: ['business', 'utilities'],
     lang: 'fr-TG',
     dir: 'ltr',
+  })
+  return new NextResponse(JSON.stringify(manifest), {
+    headers: { 'Content-Type': 'application/manifest+json; charset=utf-8' },
   })
 }
