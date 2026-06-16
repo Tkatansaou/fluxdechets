@@ -12,6 +12,25 @@ export const viewport: Viewport = {
   themeColor: '#0B6E4F',
 }
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'WasteFlow',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  description:
+    "Logiciel SaaS de pilotage de contrats DSP pour les délégataires de collecte de déchets ménagers en Afrique de l'Ouest.",
+  url: APP_URL,
+  offers: {
+    '@type': 'Offer',
+    price: '10000',
+    priceCurrency: 'XOF',
+  },
+  author: { '@type': 'Organization', name: 'WasteFlow' },
+  inLanguage: 'fr',
+  areaServed: { '@type': 'Country', name: 'Togo' },
+}
+
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   manifest: '/api/manifest',
@@ -20,17 +39,12 @@ export const metadata: Metadata = {
     template: '%s | WasteFlow',
   },
   description:
-    'Logiciel de pilotage de contrat DSP pour délégataires de collecte de déchets ménagers en Afrique de l\'Ouest. Gestion des abonnés, tournées, recouvrement Tmoney/Flooz, rapports mairie.',
+    "Logiciel de pilotage de contrat DSP pour délégataires de collecte de déchets ménagers en Afrique de l'Ouest. Gestion des abonnés, tournées, recouvrement Tmoney/Flooz, rapports mairie.",
   keywords: [
-    'gestion déchets Togo',
-    'DSP déchets solides',
-    'logiciel collecte ordures',
-    'recouvrement mobile money',
-    'Tmoney Flooz paiement',
-    'délégataire service public',
-    'WasteFlow',
-    'gestion tournées collecte',
-    'abonnés déchets ménagers',
+    'gestion déchets Togo', 'DSP déchets solides', 'logiciel collecte ordures',
+    'recouvrement mobile money', 'Tmoney Flooz paiement',
+    'délégataire service public', 'WasteFlow',
+    'gestion tournées collecte', 'abonnés déchets ménagers',
     'SaaS Afrique Togo',
   ],
   authors: [{ name: 'WasteFlow', url: APP_URL }],
@@ -52,15 +66,8 @@ export const metadata: Metadata = {
     siteName: 'WasteFlow',
     title: 'WasteFlow — Pilotage DSP Déchets Solides',
     description:
-      'Gérez vos abonnés, tournées de collecte et recouvrement mobile money (Tmoney/Flooz) depuis un seul tableau de bord. Conçu pour les délégataires de service public au Togo.',
-    images: [
-      {
-        url: '/opengraph-image',
-        width: 1200,
-        height: 630,
-        alt: 'WasteFlow — Dashboard de pilotage DSP',
-      },
-    ],
+      "Gérez vos abonnés, tournées de collecte et recouvrement mobile money (Tmoney/Flooz) depuis un seul tableau de bord. Conçu pour les délégataires de service public au Togo.",
+    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'WasteFlow — Dashboard de pilotage DSP' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -74,46 +81,14 @@ export const metadata: Metadata = {
   ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
     ? { verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } }
     : {}),
+  other: {
+    'application/ld+json': JSON.stringify(jsonLd),
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'SoftwareApplication',
-              name: 'WasteFlow',
-              applicationCategory: 'BusinessApplication',
-              operatingSystem: 'Web',
-              description:
-                'Logiciel SaaS de pilotage de contrats DSP pour les délégataires de collecte de déchets ménagers en Afrique de l\'Ouest.',
-              url: APP_URL,
-              offers: {
-                '@type': 'Offer',
-                price: '10000',
-                priceCurrency: 'XOF',
-                priceSpecification: {
-                  '@type': 'UnitPriceSpecification',
-                  price: '10000',
-                  priceCurrency: 'XOF',
-                  unitText: 'mois',
-                },
-              },
-              author: { '@type': 'Organization', name: 'WasteFlow' },
-              inLanguage: 'fr',
-              availableLanguage: 'French',
-              areaServed: { '@type': 'Country', name: 'Togo' },
-            }),
-          }}
-        />
-      </head>
       <body>
         <Providers>{children}</Providers>
         <ServiceWorkerRegister />

@@ -1,7 +1,7 @@
-// WasteFlow Service Worker — v1
-// Cache stratégique : network-first pour le frais, cache pour les assets
+// WasteFlow Service Worker — v2
+// Ne cache que les requêtes http/https (ignore les extensions chrome://)
 
-const CACHE_NAME = 'wasteflow-v1'
+const CACHE_NAME = 'wasteflow-v2'
 const STATIC_ASSETS = [
   '/',
   '/login',
@@ -25,16 +25,19 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('fetch', (event) => {
+  // Ignorer les requêtes non-http (chrome-extension://, data:, etc.)
+  if (!event.request.url.startsWith('http')) return
+
   const url = new URL(event.request.url)
 
-  // API → réseau uniquement (pas de cache pour les données dynamiques)
+  // API → réseau uniquement
   if (url.pathname.startsWith('/api/')) return
 
   // Assets statiques → cache-first
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetchPromise = fetch(event.request).then((response) => {
-        if (response.ok) {
+        if (response.ok && response.type === 'basic') {
           const clone = response.clone()
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
         }
