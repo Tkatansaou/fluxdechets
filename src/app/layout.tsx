@@ -14,6 +14,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
+  manifest: '/manifest.json',
   title: {
     default: 'WasteFlow — Pilotage DSP Déchets Solides au Togo',
     template: '%s | WasteFlow',
