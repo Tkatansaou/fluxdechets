@@ -19,7 +19,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const email = process.env.SUPERADMIN_EMAIL ?? 'katantchaa@gmail.com'
-  const password = process.env.SETUP_PASSWORD ?? process.env.CRON_SECRET ?? 'Admin123!'
+  const password = process.env.SETUP_PASSWORD ?? 'Admin123!'
 
   try {
     const existingUser = await prisma.user.findUnique({
