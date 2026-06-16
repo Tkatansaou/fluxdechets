@@ -1,7 +1,9 @@
-import type { MetadataRoute } from 'next'
+export const runtime = 'nodejs'
 
-export default function manifest(): MetadataRoute.Manifest {
-  return {
+import { NextResponse } from 'next/server'
+
+export async function GET() {
+  return NextResponse.json({
     name: 'WasteFlow — Pilotage DSP Déchets Solides',
     short_name: 'WasteFlow',
     description:
@@ -26,5 +28,5 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ['business', 'utilities'],
     lang: 'fr-TG',
     dir: 'ltr',
-  }
+  })
 }
