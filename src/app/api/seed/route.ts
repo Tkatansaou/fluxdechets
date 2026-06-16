@@ -10,12 +10,11 @@ import prisma from '@/lib/server/prisma'
  * SUPPRIMER après exécution ! (one-shot)
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  // Auth disabled temporarily for seed — re-enable after calling!
-  // const auth = req.headers.get('authorization') ?? ''
-  // const cronSecret = process.env.CRON_SECRET
-  // if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
-  //   return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
-  // }
+  const auth = req.headers.get('authorization') ?? ''
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
+  }
 
   try {
     const SUPERADMIN_EMAIL = 'katantchaa@gmail.com'
