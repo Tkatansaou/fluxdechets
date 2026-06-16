@@ -46,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setUser(null)
+        clearCsrfToken() // cookies côté serveur nettoyés par /api/auth/refresh
       } else if (err instanceof ApiError && err.status === 429) {
         setError('Trop de requêtes. Attendez quelques minutes.')
       } else {

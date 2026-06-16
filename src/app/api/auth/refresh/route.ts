@@ -6,6 +6,14 @@ import { verifyToken, issueAuthCookies } from '@/lib/server/auth'
 import prisma from '@/lib/server/prisma'
 
 const COOKIE_PREFIX = process.env.NEXT_PUBLIC_COOKIE_PREFIX ?? 'wf'
+const IS_PROD = process.env.NODE_ENV === 'production'
+
+function clearAuthCookiesOnResponse(res: NextResponse): void {
+  const opts = { path: '/', maxAge: 0, httpOnly: true, secure: IS_PROD, sameSite: 'lax' as const }
+  res.cookies.set(`${COOKIE_PREFIX}-access`, '', opts)
+  res.cookies.set(`${COOKIE_PREFIX}-refresh`, '', { ...opts, path: '/api/auth' })
+  res.cookies.set(`${COOKIE_PREFIX}-csrf`, '', { ...opts, httpOnly: false })
+}
 
 export async function POST(_req: NextRequest): Promise<NextResponse> {
   const jar = await cookies()
@@ -14,7 +22,10 @@ export async function POST(_req: NextRequest): Promise<NextResponse> {
 
   const payload = await verifyToken(refreshToken)
   if (!payload || payload.type !== 'refresh') {
-    return NextResponse.json({ error: 'INVALID_REFRESH_TOKEN' }, { status: 401 })
+    // Token invalide ou JWT_SECRET changé — nettoyer les cookies pour éviter la boucle 401
+    const res = NextResponse.json({ error: 'INVALID_REFRESH_TOKEN' }, { status: 401 })
+    clearAuthCookiesOnResponse(res)
+    return res
   }
 
   const user = await prisma.user.findUnique({
