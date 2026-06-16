@@ -18,8 +18,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
   }
 
-  const email = 'katantchaa@gmail.com'
-  const password = 'Admin123!' // mot de passe temporaire
+  const email = process.env.SUPERADMIN_EMAIL ?? 'katantchaa@gmail.com'
+  const password = process.env.SETUP_PASSWORD ?? process.env.CRON_SECRET ?? 'Admin123!'
 
   try {
     const existingUser = await prisma.user.findUnique({

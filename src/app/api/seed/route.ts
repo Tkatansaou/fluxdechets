@@ -17,7 +17,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const SUPERADMIN_EMAIL = 'katantchaa@gmail.com'
+    const SUPERADMIN_EMAIL = process.env.SUPERADMIN_EMAIL ?? 'katantchaa@gmail.com'
 
     // 1. Récupérer le user SUPERADMIN
     const user = await prisma.user.findUnique({
