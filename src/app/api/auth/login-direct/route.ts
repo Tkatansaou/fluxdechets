@@ -3,7 +3,7 @@ export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import prisma from '@/lib/server/prisma'
-import { issueAuthCookies } from '@/lib/server/auth'
+import { setAuthCookiesOnResponse } from '@/lib/server/auth'
 import { logger } from '@/lib/server/logger'
 
 /**
@@ -49,7 +49,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     ? 'SUPERADMIN'
     : membership.role === 'OWNER' ? 'ADMIN' : membership.role
 
-  await issueAuthCookies(
+  const redirectResponse = NextResponse.redirect(new URL('/dashboard', req.url))
+  await setAuthCookiesOnResponse(
+    redirectResponse,
     user.id,
     user.email,
     membership.organizationId,
@@ -59,6 +61,5 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   logger.info('login_direct', { userId: user.id, email })
 
-  // Redirect to dashboard — cookies are now set
-  return NextResponse.redirect(new URL('/dashboard', req.url))
+  return redirectResponse
 }

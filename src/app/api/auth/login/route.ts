@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import prisma from '@/lib/server/prisma'
-import { issueAuthCookies } from '@/lib/server/auth'
+import { setAuthCookiesOnResponse } from '@/lib/server/auth'
 import { logger } from '@/lib/server/logger'
 import { checkLoginRateLimit } from '@/lib/server/ratelimit'
 
@@ -73,7 +73,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     ? 'SUPERADMIN'
     : membership.role === 'OWNER' ? 'ADMIN' : membership.role
 
-  const { csrfToken } = await issueAuthCookies(
+  const response = NextResponse.json({ ok: true })
+  const { csrfToken } = await setAuthCookiesOnResponse(
+    response,
     user.id,
     user.email,
     membership.organizationId,
@@ -81,5 +83,5 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     user.tokenVersion,
   )
 
-  return NextResponse.json({ ok: true, csrfToken })
+  return response
 }

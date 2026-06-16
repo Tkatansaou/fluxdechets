@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import prisma from '@/lib/server/prisma'
 import { Prisma } from '@prisma/client'
-import { issueAuthCookies } from '@/lib/server/auth'
+import { setAuthCookiesOnResponse } from '@/lib/server/auth'
 import { logger } from '@/lib/server/logger'
 import { checkSignupRateLimit } from '@/lib/server/ratelimit'
 import { sendWelcomeEmail } from '@/lib/server/email'
@@ -98,9 +98,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Send welcome email (non-blocking — failure doesn't break signup)
   sendWelcomeEmail(email, `${prenom} ${nom}`, orgName).catch(() => null)
 
-  const { csrfToken } = await issueAuthCookies(
-    user.id, user.email, user.orgId, 'USER', user.tokenVersion
+  const response = NextResponse.json({ ok: true }, { status: 201 })
+  await setAuthCookiesOnResponse(
+    response,
+    user.id, user.email, user.orgId, 'USER', user.tokenVersion,
   )
 
-  return NextResponse.json({ ok: true, csrfToken }, { status: 201 })
+  return response
 }

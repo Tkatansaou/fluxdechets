@@ -86,6 +86,26 @@ export async function issueAuthCookies(
   return { csrfToken }
 }
 
+/** Version compatible avec Next.js 16 — set cookies directly on a NextResponse */
+export async function setAuthCookiesOnResponse(
+  response: NextResponse,
+  userId: string,
+  email: string,
+  orgId: string,
+  role: string,
+  tokenVersion: number,
+): Promise<{ csrfToken: string }> {
+  const base: Omit<JwtPayload, 'type'> = { sub: userId, email, orgId, role, tv: tokenVersion }
+  const [access, refresh] = await Promise.all([signAccessToken(base), signRefreshToken(base)])
+  const csrfToken = randomBytes(32).toString('hex')
+
+  response.cookies.set(ACCESS_COOKIE, access, cookieOpts(ACCESS_TTL))
+  response.cookies.set(REFRESH_COOKIE, refresh, cookieOpts(REFRESH_TTL, '/api/auth'))
+  response.cookies.set(CSRF_COOKIE, csrfToken, { ...cookieOpts(CSRF_TTL), httpOnly: false })
+
+  return { csrfToken }
+}
+
 export async function clearAuthCookies(): Promise<void> {
   const jar = await cookies()
   jar.delete(ACCESS_COOKIE)
