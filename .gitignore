@@ -41,5 +41,7 @@ next-env.d.ts
 .claude/
 .codex/
 
+.neon_key
+
 # Next.js 16: proxy.ts est le middleware officiel — middleware.ts ne doit pas coexister
 src/middleware.ts
