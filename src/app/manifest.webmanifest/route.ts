@@ -28,7 +28,7 @@ export async function GET() {
     categories: ['business', 'utilities'],
     lang: 'fr-TG',
     dir: 'ltr',
-  })
+  };
   return new NextResponse(JSON.stringify(manifest), {
     headers: { 'Content-Type': 'application/manifest+json; charset=utf-8' },
   })
