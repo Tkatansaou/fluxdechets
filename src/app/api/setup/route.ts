@@ -62,7 +62,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         email: user.email,
         role: user.role,
         orgId,
-        password: 'Admin123!',
       })
     }
 
@@ -102,7 +101,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       email: result.email,
       role: result.role,
       orgId: result.orgId,
-      password: 'Admin123!',
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Erreur inconnue'

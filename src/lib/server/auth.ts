@@ -4,11 +4,12 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes, createCipheriv, createDecipheriv } from 'node:crypto'
 
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required — set it in .env.local')
+function getJwtSecret(): Uint8Array {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required — set it in .env.local')
+  }
+  return new TextEncoder().encode(process.env.JWT_SECRET)
 }
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET)
 
 const COOKIE_PREFIX = process.env.NEXT_PUBLIC_COOKIE_PREFIX ?? 'wf'
 const ACCESS_COOKIE = `${COOKIE_PREFIX}-access`
@@ -35,7 +36,7 @@ export async function signAccessToken(payload: Omit<JwtPayload, 'type'>): Promis
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(`${ACCESS_TTL}s`)
-    .sign(JWT_SECRET)
+    .sign(getJwtSecret())
 }
 
 export async function signRefreshToken(payload: Omit<JwtPayload, 'type'>): Promise<string> {
@@ -43,12 +44,12 @@ export async function signRefreshToken(payload: Omit<JwtPayload, 'type'>): Promi
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(`${REFRESH_TTL}s`)
-    .sign(JWT_SECRET)
+    .sign(getJwtSecret())
 }
 
 export async function verifyToken(token: string): Promise<JwtPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET)
+    const { payload } = await jwtVerify(token, getJwtSecret())
     return payload as unknown as JwtPayload
   } catch {
     return null
@@ -136,7 +137,7 @@ export function verifyCsrf(req: NextRequest): NextResponse | null {
 
 // ─── Encryption (for sensitive fields like API keys) ─────────────────────────
 
-const ENC_KEY_B64 = process.env.ENCRYPTION_KEY ?? ''
+const ENC_KEY_B64 = process.env.ENCRYPTION_KEY ?? '' // lazy: checked in getEncKey()
 
 function getEncKey(): Buffer {
   if (!ENC_KEY_B64) throw new Error('ENCRYPTION_KEY env var missing')

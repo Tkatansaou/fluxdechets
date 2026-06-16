@@ -17,6 +17,7 @@
     "db:migrate:status": "prisma migrate status",
     "db:studio": "prisma studio",
     "seed": "tsx --env-file-if-exists=.env.local scripts/seed-dev.ts",
+    "seed-prod": "tsx --env-file-if-exists=.env.local scripts/seed-prod.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
