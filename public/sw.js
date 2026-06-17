@@ -1,7 +1,7 @@
 // WasteFlow Service Worker — v2
 // Ne cache que les requêtes http/https (ignore les extensions chrome://)
 
-const CACHE_NAME = 'wasteflow-v2'
+const CACHE_NAME = 'wasteflow-v3'
 const STATIC_ASSETS = [
   '/',
   '/login',
