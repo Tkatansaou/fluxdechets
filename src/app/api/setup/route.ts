@@ -8,7 +8,7 @@ import { Prisma } from '@prisma/client'
 /**
  * POST /api/setup
  * Crée ou met à jour le superadmin (katantchaa@gmail.com) + DelegataireProfil.
- * Protégé par CRON_SECRET dans le header x-setup-key.
+ * ATTENTION: protection temporairement désactivée — à réactiver après usage.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
   // NOTE: PROTECTION TEMPORAIREMENT DÉSACTIVÉE — à réactiver après setup
@@ -29,7 +29,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const passwordHash = await bcrypt.hash(password, 12)
 
     if (existingUser) {
-      // Mettre à jour le user
       const user = await prisma.user.update({
         where: { id: existingUser.id },
         data: { passwordHash, role: 'SUPERADMIN', tokenVersion: { increment: 1 } },
@@ -37,7 +36,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       let orgId = existingUser.memberships[0]?.organizationId
 
-      // Créer l'org si nécessaire
       if (!orgId) {
         const org = await prisma.organization.create({
           data: {
@@ -51,7 +49,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         orgId = org.id
       }
 
-      // Créer le DelegataireProfil si nécessaire
       const org = existingUser.memberships[0]?.organization
       if (!org?.deleProf) {
         await prisma.delegataireProfil.create({
@@ -77,7 +74,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       })
     }
 
-    // Créer le superadmin from scratch
     const slug = 'stadd-gip-togo'
 
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
