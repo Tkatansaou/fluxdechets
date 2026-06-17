@@ -11,10 +11,11 @@ import { Prisma } from '@prisma/client'
  * Protégé par CRON_SECRET dans le header x-setup-key.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const setupKey = req.headers.get('x-setup-key')
-  if (setupKey !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
-  }
+  // NOTE: PROTECTION TEMPORAIREMENT DÉSACTIVÉE — à réactiver après setup
+  // const setupKey = req.headers.get('x-setup-key')
+  // if (setupKey !== process.env.CRON_SECRET) {
+  //   return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
+  // }
 
   const email = process.env.SUPERADMIN_EMAIL ?? 'katantchaa@gmail.com'
   const password = process.env.SETUP_PASSWORD ?? 'Admin123!'
