@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import { Landmark, Truck, Users, TrendingUp, Shield, ChevronRight, Menu, X, CheckCircle, BarChart3, MapPin, Smartphone, Globe } from 'lucide-react'
 
