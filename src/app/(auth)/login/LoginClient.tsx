@@ -15,13 +15,18 @@ export default function LoginClient() {
   const [showPwd, setShowPwd] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     if (!loading && user) router.replace('/dashboard')
   }, [loading, user, router])
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#F2F4F0]">
+        <div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -46,14 +51,6 @@ export default function LoginClient() {
       }
       setSubmitting(false)
     }
-  }
-
-  if (loading || !mounted) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-[#F2F4F0]">
-        <div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
   }
 
   return (
