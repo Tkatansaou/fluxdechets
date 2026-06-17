@@ -15,6 +15,9 @@ export default function LoginClient() {
   const [showPwd, setShowPwd] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     if (!loading && user) router.replace('/dashboard')
@@ -45,7 +48,7 @@ export default function LoginClient() {
     }
   }
 
-  if (loading) {
+  if (loading || !mounted) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#F2F4F0]">
         <div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
