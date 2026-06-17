@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { Toaster } from 'react-hot-toast'
 import { useState } from 'react'
+import { ServiceWorkerCleanup } from '@/components/layout/ServiceWorkerCleanup'
 
 // AuthProvider gère l'auth JWT + /api/auth/*
 // QueryClientProvider ajoute le caching React Query avec auto-refresh
@@ -27,6 +28,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         {children}
+        <ServiceWorkerCleanup />
         <Toaster
           position="top-right"
           toastOptions={{
