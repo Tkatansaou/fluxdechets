@@ -97,8 +97,29 @@ export async function requireOrgAccess(
 
 /**
  * Get the DelegataireProfil for the current authenticated user's organisation.
- * Returns the profile or a 404 if not found.
  */
 export async function getOrgProfile(orgId: string) {
   return prisma.delegataireProfil.findUnique({ where: { orgId } })
+}
+
+/**
+ * Require the authenticated user's organisation to be a specific type (delegataire | mairie).
+ */
+export async function requireTypeOrg(
+  req: NextRequest,
+  typeOrg: string,
+): Promise<AuthContext | NextResponse> {
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
+
+  const org = await prisma.organization.findUnique({
+    where: { id: auth.orgId },
+    select: { typeOrg: true },
+  })
+
+  if (!org || org.typeOrg !== typeOrg) {
+    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
+  }
+
+  return auth
 }

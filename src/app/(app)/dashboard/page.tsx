@@ -300,7 +300,7 @@ export default function DashboardPage() {
         {recentPaiements.length === 0 ? (
           <div className="text-center py-8 text-xs text-gray-400">Aucun paiement enregistré</div>
         ) : (
-          <table className="w-full table-dense">
+          <table className="w-full">
             <thead>
               <tr>
                 <th className="text-left">Abonné</th>

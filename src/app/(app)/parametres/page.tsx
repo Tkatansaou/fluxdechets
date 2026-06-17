@@ -299,7 +299,7 @@ export default function ParametresPage() {
               Invitez votre équipe via le formulaire d'inscription
             </div>
           ) : (
-            <table className="w-full table-dense">
+            <table className="w-full">
               <thead>
                 <tr>
                   <th className="text-left">Nom</th>

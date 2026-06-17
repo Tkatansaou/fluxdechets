@@ -111,7 +111,7 @@ export default function FicheAbonnePage() {
   if (loading) return <div className="text-center py-20 text-gray-400 text-sm">Chargement…</div>
   if (!abonne) return null
 
-  const paymentLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/pay/${abonne.lienPaiementToken}`
+  const paymentLink = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/pay/${abonne.lienPaiementToken}`
 
   return (
     <div className="max-w-3xl space-y-4">

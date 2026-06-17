@@ -336,7 +336,7 @@ export default function ScrapingPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full table-dense">
+              <table className="w-full">
                 <thead>
                   <tr>
                     <th className="text-left">Nom / Établissement</th>

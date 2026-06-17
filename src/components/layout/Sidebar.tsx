@@ -23,6 +23,18 @@ const navItems = [
   { href: '/parametres', label: 'Paramètres', icon: Settings },
 ]
 
+// Nav items supplémentaires pour les rôles spécifiques
+function getExtraNav(userRole: string | undefined) {
+  const items: { href: string; label: string; icon: any }[] = []
+  if (userRole === 'SUPERADMIN') {
+    items.push({ href: '/superadmin', label: 'Admin plateforme', icon: ShieldAlert })
+  }
+  if (userRole === 'MAIRIE') {
+    items.push({ href: '/commune', label: 'Vue Mairie', icon: ShieldAlert })
+  }
+  return items
+}
+
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
@@ -76,23 +88,26 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Superadmin link — visible uniquement au SUPERADMIN */}
-      {user?.role === 'SUPERADMIN' && (
-        <div className="px-2 pb-1 border-t border-[#1E3A28] pt-2">
-          <Link
-            href="/superadmin"
-            className={cn(
-              'flex items-center gap-3 px-4 py-2 mx-0 rounded-md text-sm transition-colors',
-              pathname === '/superadmin'
-                ? 'bg-purple-900 text-purple-200 font-medium'
-                : 'text-purple-400 hover:text-purple-200 hover:bg-purple-900/40',
-            )}
-          >
-            <ShieldAlert size={15} className="flex-shrink-0" />
-            <span className="flex-1 truncate">Admin plateforme</span>
-          </Link>
-        </div>
-      )}
+      {/* Nav items supplémentaires (superadmin, mairie…) */}
+      {getExtraNav(user?.role).map(item => {
+        const Icon = item.icon
+        return (
+          <div key={item.href} className="px-2 pb-1 border-t border-[#1E3A28] pt-2">
+            <Link
+              href={item.href}
+              className={cn(
+                'flex items-center gap-3 px-4 py-2 mx-0 rounded-md text-sm transition-colors',
+                pathname === item.href
+                  ? 'bg-purple-900 text-purple-200 font-medium'
+                  : 'text-purple-400 hover:text-purple-200 hover:bg-purple-900/40',
+              )}
+            >
+              <Icon size={15} className="flex-shrink-0" />
+              <span className="flex-1 truncate">{item.label}</span>
+            </Link>
+          </div>
+        )
+      })}
 
       {/* User / Logout */}
       <div className="border-t border-[#1E3A28] p-3">

@@ -419,7 +419,7 @@ export default function SuperAdminPage() {
               <div className="text-center py-12 text-sm text-gray-400">Aucune organisation</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full table-dense">
+                <table className="w-full">
                   <thead>
                     <tr>
                       <th className="text-left">Organisation</th>
@@ -548,7 +548,7 @@ export default function SuperAdminPage() {
               <div className="text-center py-12 text-sm text-gray-400">Aucun utilisateur</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full table-dense">
+                <table className="w-full">
                   <thead>
                     <tr>
                       <th className="text-left">Utilisateur</th>

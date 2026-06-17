@@ -213,7 +213,7 @@ export default function PaiementsPage() {
               </div>
             )
           })()}
-          <table className="w-full table-dense">
+          <table className="w-full">
             <thead>
               <tr>
                 <th className="text-left">Abonné</th>
