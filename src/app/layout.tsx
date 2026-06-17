@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { Providers } from './providers'
-import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fluxdechets.com'
 
@@ -10,25 +9,6 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   themeColor: '#0B6E4F',
-}
-
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'WasteFlow',
-  applicationCategory: 'BusinessApplication',
-  operatingSystem: 'Web',
-  description:
-    "Logiciel SaaS de pilotage de contrats DSP pour les délégataires de collecte de déchets ménagers en Afrique de l'Ouest.",
-  url: APP_URL,
-  offers: {
-    '@type': 'Offer',
-    price: '10000',
-    priceCurrency: 'XOF',
-  },
-  author: { '@type': 'Organization', name: 'WasteFlow' },
-  inLanguage: 'fr',
-  areaServed: { '@type': 'Country', name: 'Togo' },
 }
 
 export const metadata: Metadata = {
@@ -81,17 +61,34 @@ export const metadata: Metadata = {
   ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
     ? { verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } }
     : {}),
-  other: {
-    'application/ld+json': JSON.stringify(jsonLd),
-  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'SoftwareApplication',
+              name: 'WasteFlow',
+              applicationCategory: 'BusinessApplication',
+              operatingSystem: 'Web',
+              description:
+                "Logiciel SaaS de pilotage de contrats DSP pour les délégataires de collecte de déchets ménagers en Afrique de l'Ouest.",
+              url: APP_URL,
+              offers: { '@type': 'Offer', price: '10000', priceCurrency: 'XOF' },
+              author: { '@type': 'Organization', name: 'WasteFlow' },
+              inLanguage: 'fr',
+              areaServed: { '@type': 'Country', name: 'Togo' },
+            }),
+          }}
+        />
+      </head>
       <body>
         <Providers>{children}</Providers>
-        <ServiceWorkerRegister />
       </body>
     </html>
   )
