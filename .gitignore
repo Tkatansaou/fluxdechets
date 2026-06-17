@@ -34,9 +34,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
-.env*.local
-
 # Claude Code local data (memory, session state)
 .claude/
 .codex/
@@ -45,3 +42,4 @@ next-env.d.ts
 
 # Next.js 16: proxy.ts est le middleware officiel — middleware.ts ne doit pas coexister
 src/middleware.ts
+_eslint_output.json

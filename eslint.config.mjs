@@ -27,6 +27,7 @@ export default [
     rules: {
       'no-unused-vars': 'off',
       'no-undef': 'off', // TypeScript handles this
+      'no-constant-binary-expression': 'warn', // Allow intentional false && expression in test utils
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-console': ['warn', { allow: ['warn', 'error'] }],

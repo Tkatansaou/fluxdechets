@@ -2,7 +2,7 @@ import 'server-only'
 import { PrismaClient } from '@prisma/client'
 
 declare global {
-  // eslint-disable-next-line no-var
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   var __prisma: PrismaClient | undefined
 }
 
