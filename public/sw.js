@@ -1,23 +1,5 @@
-// WasteFlow Service Worker — v4 (cache buster)
-// Force le renouvellement complet du cache sur toutes les pages
-
-const CACHE_NAME = 'wasteflow-v4'
-
-self.addEventListener('install', () => {
-  self.skipWaiting()
-})
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.map((k) => caches.delete(k)))
-    )
-  )
-  self.clients.claim()
-})
-
-self.addEventListener('fetch', (event) => {
-  // Pas de cache — réseau uniquement
-  // Le SW sert juste pour la PWA (installable, offline page)
-  return
-})
+// WasteFlow Service Worker — DÉSACTIVÉ
+// Le SW a été désactivé car il causait des conflits de cache
+// avec les redirections Next.js 16 et l'hydratation React 19.
+// Réactiver quand Next.js 16 aura stabilisé son support PWA.
+// Voir conversation Hermès : juin 2026, erreur #418

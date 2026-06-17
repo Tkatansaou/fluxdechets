@@ -66,28 +66,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'SoftwareApplication',
-              name: 'WasteFlow',
-              applicationCategory: 'BusinessApplication',
-              operatingSystem: 'Web',
-              description:
-                "Logiciel SaaS de pilotage de contrats DSP pour les délégataires de collecte de déchets ménagers en Afrique de l'Ouest.",
-              url: APP_URL,
-              offers: { '@type': 'Offer', price: '10000', priceCurrency: 'XOF' },
-              author: { '@type': 'Organization', name: 'WasteFlow' },
-              inLanguage: 'fr',
-              areaServed: { '@type': 'Country', name: 'Togo' },
-            }),
-          }}
-        />
-      </head>
-      <body>
+      <head />
+      <body suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
