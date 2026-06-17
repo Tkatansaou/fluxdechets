@@ -7,12 +7,10 @@ import { Prisma } from '@prisma/client'
 
 /**
  * POST /api/setup
- * Crée le superadmin initial (katantchaa@gmail.com) si pas encore SUPERADMIN.
- * Protégé par un token maître passé dans le header X-Setup-Key.
- * À désactiver après usage ou protéger par CRON_SECRET.
+ * Crée ou met à jour le superadmin (katantchaa@gmail.com) + DelegataireProfil.
+ * Protégé par CRON_SECRET dans le header x-setup-key.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  // Vérifier le secret — seul le propriétaire peut appeler cette route
   const setupKey = req.headers.get('x-setup-key')
   if (setupKey !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
@@ -24,36 +22,49 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const existingUser = await prisma.user.findUnique({
       where: { email },
-      include: { memberships: true },
+      include: { memberships: { include: { organization: { include: { deleProf: true } } } } },
     })
 
+    const passwordHash = await bcrypt.hash(password, 12)
+
     if (existingUser) {
-      // Mettre à jour le mot de passe et le rôle
-      const passwordHash = await bcrypt.hash(password, 12)
+      // Mettre à jour le user
       const user = await prisma.user.update({
         where: { id: existingUser.id },
-        data: {
-          passwordHash,
-          role: 'SUPERADMIN',
-          tokenVersion: { increment: 1 },
-        },
+        data: { passwordHash, role: 'SUPERADMIN', tokenVersion: { increment: 1 } },
       })
 
-      // S'assurer qu'il a une organisation
       let orgId = existingUser.memberships[0]?.organizationId
+
+      // Créer l'org si nécessaire
       if (!orgId) {
         const org = await prisma.organization.create({
           data: {
-            name: 'WasteFlow Admin',
-            slug: 'wasteflow-admin-' + Date.now().toString(36),
+            name: 'STADD-GIP-Togo',
+            slug: 'stadd-gip-togo',
             ownerId: user.id,
             typeOrg: 'delegataire',
-            members: {
-              create: { userId: user.id, role: 'OWNER' },
-            },
+            members: { create: { userId: user.id, role: 'OWNER' } },
           },
         })
         orgId = org.id
+      }
+
+      // Créer le DelegataireProfil si nécessaire
+      const org = existingUser.memberships[0]?.organization
+      if (!org?.deleProf) {
+        await prisma.delegataireProfil.create({
+          data: {
+            orgId,
+            commune: 'Lomé',
+            region: 'Maritime',
+            numContrat: 'DSP-LOME-2026-001',
+            dateContrat: new Date('2026-01-01'),
+            objectifAbonnes: 900,
+            objectifRecouvrement: 80,
+            objectifCollecte: 99,
+          },
+        })
       }
 
       return NextResponse.json({
@@ -65,9 +76,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       })
     }
 
-    // Créer le superadmin
-    const passwordHash = await bcrypt.hash(password, 12)
-    const slug = 'wasteflow-admin-' + Date.now().toString(36)
+    // Créer le superadmin from scratch
+    const slug = 'stadd-gip-togo'
 
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const user = await tx.user.create({
@@ -83,12 +93,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const org = await tx.organization.create({
         data: {
           slug,
-          name: 'WasteFlow Admin',
+          name: 'STADD-GIP-Togo',
           ownerId: user.id,
           typeOrg: 'delegataire',
-          members: {
-            create: { userId: user.id, role: 'OWNER' },
-          },
+          members: { create: { userId: user.id, role: 'OWNER' } },
+        },
+      })
+
+      await tx.delegataireProfil.create({
+        data: {
+          orgId: org.id,
+          commune: 'Lomé',
+          region: 'Maritime',
+          numContrat: 'DSP-LOME-2026-001',
+          dateContrat: new Date('2026-01-01'),
+          objectifAbonnes: 900,
+          objectifRecouvrement: 80,
+          objectifCollecte: 99,
         },
       })
 
@@ -97,7 +118,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({
       ok: true,
-      message: 'Superadmin créé',
+      message: 'Superadmin créé avec profil DSP',
       email: result.email,
       role: result.role,
       orgId: result.orgId,
