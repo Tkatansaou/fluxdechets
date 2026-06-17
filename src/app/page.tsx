@@ -1,23 +1,10 @@
-'use client'
+import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { COOKIE_PREFIX } from '@/lib/constants'
+const COOKIE_PREFIX = process.env.NEXT_PUBLIC_COOKIE_PREFIX ?? 'wf'
 
-export default function Home() {
-  const router = useRouter()
-
-  useEffect(() => {
-    const csrfCookieName = `${COOKIE_PREFIX}-csrf`
-    const hasSession = document.cookie
-      .split(';')
-      .some(c => c.trim().startsWith(`${csrfCookieName}=`))
-    router.replace(hasSession ? '/dashboard' : '/login')
-  }, [router])
-
-  return (
-    <div className="flex h-screen items-center justify-center bg-[#F2F4F0]">
-      <div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
+export default async function Home() {
+  const cookieStore = await cookies()
+  const hasSession = cookieStore.has(`${COOKIE_PREFIX}-csrf`)
+  redirect(hasSession ? '/dashboard' : '/login')
 }
