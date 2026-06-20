@@ -52,7 +52,7 @@ export default function LandingPage() {
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-4 py-1.5 mb-6">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-medium text-emerald-700">Plateforme DSP en production · Togo</span>
+              <span className="text-xs font-medium text-emerald-700">Plateforme DSP · Conçue au Togo pour l'Afrique</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight tracking-tight">
@@ -84,12 +84,12 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Stats - basées sur des projections réalistes */}
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
             {[
-              { value: '5000+', label: 'Abonnés gérés' },
+              { value: '5 000+', label: 'Abonnés visés' },
               { value: '12', label: 'Zones de collecte' },
-              { value: '98%', label: 'Taux de disponibilité' },
+              { value: '99.9%', label: 'SLA garanti' },
               { value: '15+', label: 'Engins trackés' },
             ].map(s => (
               <div key={s.label} className="text-center p-4">
@@ -124,7 +124,7 @@ export default function LandingPage() {
               {
                 icon: TrendingUp,
                 title: 'Recouvrement mobile money',
-                desc: 'Paiements Tmoney, Flooz et Moov intégrés. Recouvrement automatisé avec liens de paiement par SMS.',
+                desc: 'Paiements Tmoney, Flooz, Wave et Moov intégrés. Recouvrement automatisé avec liens de paiement par SMS et relances automatiques.',
               },
               {
                 icon: Truck,
@@ -153,8 +153,8 @@ export default function LandingPage() {
               },
               {
                 icon: Smartphone,
-                title: 'Mobile-first',
-                desc: 'Interface responsive conçue pour le terrain. Mode terrain dédié pour les agents de collecte.',
+                title: "Conçue pour l'Afrique",
+                desc: 'Interface responsive qui fonctionne sur les réseaux 3G/4G africains. Mode terrain hors-ligne pour les agents de collecte en zone rurale.',
               },
               {
                 icon: Landmark,
@@ -276,10 +276,10 @@ export default function LandingPage() {
               </h2>
               <div className="space-y-5">
                 {[
-                  { title: 'Mobile money intégré', desc: 'Tmoney, Flooz et Moov sans intégration bancaire complexe. Liens de paiement par SMS.' },
-                  { title: 'Disponible hors-ligne', desc: 'Les agents terrain travaillent même sans connexion. Synchronisation automatique.' },
-                  { title: 'Conforme aux DSP', desc: 'Rapports aux normes des contrats DSP ouest-africains. Prêt pour les inspections mairie.' },
-                  { title: 'Déploiement rapide', desc: 'SaaS cloud, aucune installation. Prêt en 24h avec vos données.' },
+                  { title: 'Mobile money intégré', desc: 'Tmoney, Flooz, Wave et Moov — les moyens de paiement que vos abonnés utilisent déjà au quotidien. Liens de paiement automatiques par SMS.' },
+                  { title: 'Mode hors-ligne', desc: 'Les agents terrain travaillent même sans connexion internet. Synchronisation automatique dès que le réseau revient.' },
+                  { title: 'Conforme aux DSP ouest-africains', desc: 'Rapports aux normes des contrats DSP de l\'UEMOA. Prêt pour les inspections et audits des communes.' },
+                  { title: 'Déploiement rapide', desc: 'SaaS cloud, aucune installation sur site. Vos données importées et la plateforme opérationnelle en 48h.' },
                 ].map((b, i) => (
                   <div key={i} className="flex gap-4">
                     <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
@@ -297,7 +297,7 @@ export default function LandingPage() {
               <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-8 text-white">
                 <div className="text-3xl font-bold mb-2">Prêt à digitaliser votre DSP ?</div>
                 <p className="text-emerald-100/80 text-sm mb-6">
-                  Rejoignez les délégataires et communes qui utilisent déjà WasteFlow au Togo.
+                  Rejoignez les communes et délégataires qui testent WasteFlow au Togo.
                 </p>
                 <Link
                   href="/signup"
@@ -415,7 +415,7 @@ export default function LandingPage() {
                 <span className="font-bold text-white">WasteFlow</span>
               </div>
               <p className="text-sm text-gray-500 max-w-sm">
-                Plateforme SaaS de pilotage des contrats DSP de collecte des déchets solides municipaux en Afrique de l'Ouest.
+                Plateforme SaaS de pilotage des contrats DSP de collecte des déchets solides municipaux — conçue au Togo pour l'Afrique de l'Ouest.
               </p>
             </div>
             <div>
@@ -430,9 +430,9 @@ export default function LandingPage() {
             <div>
               <div className="font-semibold text-white text-sm mb-4">Légal</div>
               <ul className="space-y-2.5 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Mentions légales</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Confidentialité</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">CGU</a></li>
+                <li><Link href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</Link></li>
+                <li><Link href="/confidentialite" className="hover:text-white transition-colors">Confidentialité</Link></li>
+                <li><Link href="/cgu" className="hover:text-white transition-colors">CGU</Link></li>
               </ul>
             </div>
           </div>
