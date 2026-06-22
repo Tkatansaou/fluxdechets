@@ -110,7 +110,22 @@ Conversions clés mock → Prisma : `zone_id→zoneId`, `lien_paiement_token→l
 | `/api/consommables` | GET, POST | Stocks + mouvementsRecents |
 | `/api/consommables/[id]` | GET, POST | Fiche + mouvement stock |
 | `/api/rapports` | GET, POST | Liste + génération trimestre/année |
-| `/api/commune` | GET | Dashboard lecture seule mairie (KPIs, zones, flotte, activité) |
+|| `/api/commune` | GET | Dashboard lecture seule mairie (KPIs, zones, flotte, activité) |
+|| `/api/kpis` | GET | KPIs agrégés |
+|| `/api/export` | GET | Export CSV/PDF des données |
+|| `/api/employes` | GET, POST | Gestion des employés |
+|| `/api/employes/[id]` | GET, PATCH | Fiche employé |
+|| `/api/events` | GET | SSE événements temps réel |
+|| `/api/health` | GET | Health check |
+|| `/api/seed` | POST | Seed de développement (dev only) |
+|| `/api/setup` | GET, POST | Setup initial app |
+|| `/api/superadmin/stats` | GET | Statistiques globales superadmin |
+|| `/api/superadmin/orgs` | GET, POST | Orgs (superadmin) |
+|| `/api/superadmin/orgs/[id]` | GET, PATCH | Fiche org (superadmin) |
+|| `/api/superadmin/users` | GET, POST | Utilisateurs (superadmin) |
+|| `/api/superadmin/users/[id]` | GET, PATCH | Fiche user (superadmin) |
+|| `/api/cron/payment-reminders` | POST | Relances paiements automatiques (cron) |
+|| `/api/places/autocomplete` | GET | Autocomplete adresses Google Maps |
 
 **Pattern action-dispatch engins** : `PATCH /api/engins/[id]` avec `{ action: 'panne'|'maintenance'|'carburant'|'resolve-panne', ...data }`.
 
@@ -210,7 +225,10 @@ npm run seed
 | `/consommables` | Stocks, alertes seuil, entrées/sorties | ✅ réel |
 | `/parametres` | Org, zones, équipe | ✅ réel |
 | `/commune` | Vue lecture seule mairie (synthèse, zones, flotte, activité) | ✅ réel |
-| `/pay/[token]` | Paiement mobile money abonné | ✅ réel |
+|| `/pay/[token]` | Paiement mobile money abonné | ✅ réel |
+|| `/employes` | Gestion des employés | ✅ réel |
+|| `/scraping` | Prospection / scraping | ✅ réel |
+|| `/superadmin` | Superadmin dashboard | ✅ réel |
 
 ---
 

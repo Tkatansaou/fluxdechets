@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { Providers } from './providers'
-import Script from 'next/script'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fluxdechets.com'
 
@@ -53,26 +52,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <Script id="kill-sw" strategy="beforeInteractive">
-          {`
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations().then(function(regs) {
-                for (var i = 0; i < regs.length; i++) {
-                  regs[i].unregister()
-                  console.log('SW unregistered:', i)
-                }
-              })
-              if ('caches' in window) {
-                caches.keys().then(function(keys) {
-                  return Promise.all(keys.map(function(k) {
-                    caches.delete(k)
-                    console.log('Cache deleted:', k)
-                  }))
-                })
-              }
-            }
-          `}
-        </Script>
         <Providers>{children}</Providers>
       </body>
     </html>
