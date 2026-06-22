@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Building2, Users, MapPin, Landmark } from 'lucide-react'
+import { Building2, Users, MapPin, Landmark, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
@@ -286,6 +286,9 @@ export default function ParametresPage() {
         </div>
       )}
 
+      {/* Sécurité — Mot de passe */}
+      {tab === 'organisation' && <SecuritySection />}
+
       {/* Équipe */}
       {tab === 'utilisateurs' && (
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -380,6 +383,146 @@ export default function ParametresPage() {
           </Select>
         </div>
       </Modal>
+    </div>
+  )
+}
+
+/* ─── Sécurité — Changement de mot de passe ───────────────────────────── */
+function SecuritySection() {
+  const [currentPwd, setCurrentPwd] = useState('')
+  const [newPwd, setNewPwd] = useState('')
+  const [confirmPwd, setConfirmPwd] = useState('')
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [success, setSuccess] = useState(false)
+
+  const constraints = [
+    { label: 'Min. 8 caractères', ok: newPwd.length >= 8 },
+    { label: 'Min. 1 majuscule', ok: /[A-Z]/.test(newPwd) },
+    { label: 'Min. 1 chiffre', ok: /[0-9]/.test(newPwd) },
+    { label: 'Les mots de passe correspondent', ok: newPwd === confirmPwd && confirmPwd.length > 0 },
+  ]
+
+  const canSubmit = currentPwd.length > 0 && constraints.every(c => c.ok) && !submitting
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return
+    setSubmitting(true)
+    setSuccess(false)
+    try {
+      await api('/api/auth/change-password', {
+        method: 'POST',
+        body: { currentPassword: currentPwd, newPassword: newPwd },
+      })
+      setSuccess(true)
+      setCurrentPwd('')
+      setNewPwd('')
+      setConfirmPwd('')
+      toast.success('Mot de passe modifié avec succès')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erreur'
+      if (msg.includes('INVALID_CURRENT_PASSWORD')) {
+        toast.error('Mot de passe actuel incorrect')
+      } else {
+        toast.error(msg)
+      }
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center">
+          <Lock size={15} className="text-amber-600" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">Sécurité</h3>
+          <p className="text-xs text-gray-400">Modifier votre mot de passe</p>
+        </div>
+      </div>
+
+      {success && (
+        <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-3 py-2.5">
+          <CheckCircle size={14} />
+          Mot de passe modifié. Les autres sessions ont été déconnectées.
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {/* Mot de passe actuel */}
+        <div>
+          <label className="text-xs font-medium text-gray-700 block mb-1">Mot de passe actuel</label>
+          <div className="relative">
+            <input
+              type={showCurrent ? 'text' : 'password'}
+              value={currentPwd}
+              onChange={e => { setCurrentPwd(e.target.value); setSuccess(false) }}
+              placeholder="••••••••"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 h-9"
+            />
+            <button type="button" onClick={() => setShowCurrent(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              {showCurrent ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Nouveau mot de passe */}
+        <div>
+          <label className="text-xs font-medium text-gray-700 block mb-1">Nouveau mot de passe</label>
+          <div className="relative">
+            <input
+              type={showNew ? 'text' : 'password'}
+              value={newPwd}
+              onChange={e => { setNewPwd(e.target.value); setSuccess(false) }}
+              placeholder="••••••••"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 h-9"
+            />
+            <button type="button" onClick={() => setShowNew(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              {showNew ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Confirmation */}
+        <div>
+          <label className="text-xs font-medium text-gray-700 block mb-1">Confirmer le mot de passe</label>
+          <div className="relative">
+            <input
+              type={showConfirm ? 'text' : 'password'}
+              value={confirmPwd}
+              onChange={e => { setConfirmPwd(e.target.value); setSuccess(false) }}
+              placeholder="••••••••"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 h-9"
+            />
+            <button type="button" onClick={() => setShowConfirm(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              {showConfirm ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Contraintes */}
+      {newPwd.length > 0 && (
+        <div className="space-y-1.5">
+          {constraints.map((c, i) => (
+            <div key={i} className={`flex items-center gap-1.5 text-xs ${c.ok ? 'text-emerald-600' : 'text-gray-400'}`}>
+              <CheckCircle size={11} />
+              {c.label}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Button variant="primary" onClick={handleSubmit} disabled={!canSubmit}>
+        {submitting ? 'Modification…' : 'Modifier le mot de passe'}
+      </Button>
     </div>
   )
 }
