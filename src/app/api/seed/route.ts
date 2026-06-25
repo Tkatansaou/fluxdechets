@@ -69,7 +69,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     for (const emp of emps) {
       const ex = await prisma.user.findUnique({ where: { email: emp.e } })
       if (ex) { if (emp.r === 'chauffeur') cIds.push(ex.id); continue }
-      const u = await prisma.user.create({ data: { email: emp.e, name: emp.n, passwordHash: ph, role: 'MEMBER', emailVerifiedAt: new Date(), memberships: { create: { organizationId: orgId, role: emp.r === 'chauffeur' ? 'CHAUFFEUR' : 'MEMBER' } } } })
+      const u = await prisma.user.create({ data: { email: emp.e, name: emp.n, passwordHash: ph, role: 'USER', emailVerifiedAt: new Date(), memberships: { create: { organizationId: orgId, role: emp.r === 'chauffeur' ? 'CHAUFFEUR' : 'MEMBER' } } } })
       await prisma.employe.create({ data: { orgId, nom: emp.n.split(' ')[1] ?? emp.n, prenom: emp.n.split(' ')[0] ?? '', email: emp.e, poste: emp.r, telephone: emp.t, dateEmbauche: new Date('2024-01-15'), statut: 'actif', salaire: emp.r === 'chauffeur' ? 120000 : 80000 } })
       if (emp.r === 'chauffeur') cIds.push(u.id)
     }
