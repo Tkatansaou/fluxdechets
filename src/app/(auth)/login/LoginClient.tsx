@@ -33,12 +33,16 @@ export default function LoginClient() {
     setError('')
     setSubmitting(true)
     try {
-      const res = await api<{ ok: boolean; csrfToken: string }>('/api/auth/login', {
+      const res = await api<{ ok: boolean; csrfToken?: string }>('/api/auth/login', {
         method: 'POST',
         body: { email, password },
       })
-      if (res.csrfToken) storeCsrfToken(res.csrfToken)
-      router.replace('/dashboard')
+      if (res.ok) {
+        if (res.csrfToken) storeCsrfToken(res.csrfToken)
+        // Double sécurité : router pour Next.js + fallback window.location
+        router.replace('/dashboard')
+        setTimeout(() => { window.location.href = '/dashboard' }, 500)
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         switch (err.code) {
