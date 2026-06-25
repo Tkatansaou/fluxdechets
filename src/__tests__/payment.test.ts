@@ -42,7 +42,7 @@ describe('moyens de paiement', () => {
   })
 
   it('opérateur ignoré si espèces', () => {
-    const moyen = 'espèces'
+    const moyen: string = 'espèces'
     const operateur = 'tmoney'
     const isValid = moyen !== 'mobile-money' || operateur !== undefined
     expect(isValid).toBe(true)

@@ -8,7 +8,7 @@ import prisma from '@/lib/server/prisma'
 
 const patchSchema = z.object({
   action: z.enum(['suspend-owner', 'activate-owner', 'set-owner-role']),
-  role: z.string().optional(),
+  role: z.enum(['USER', 'ADMIN', 'SUPERADMIN']).optional(),
 })
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {

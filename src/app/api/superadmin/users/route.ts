@@ -1,6 +1,7 @@
 export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
+import type { UserRole } from '@prisma/client'
 import { requireSuperAdmin } from '@/lib/server/middleware'
 import prisma from '@/lib/server/prisma'
 
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           { name: { contains: search, mode: 'insensitive' } },
         ],
       } : {}),
-      ...(roleFilter ? { role: roleFilter } : {}),
+      ...(roleFilter ? { role: roleFilter as UserRole } : {}),
     },
     select: {
       id: true,
