@@ -7,18 +7,29 @@ import { Prisma } from '@prisma/client'
 
 /**
  * POST /api/setup
- * Crée ou met à jour le superadmin (katantchaa@gmail.com) + DelegataireProfil.
- * ATTENTION: protection temporairement désactivée — à réactiver après usage.
+ * Crée ou met à jour le superadmin + DelegataireProfil.
+ * Protégé par CRON_SECRET (header x-setup-key).
+ * Requiert SUPERADMIN_EMAIL et SETUP_PASSWORD dans les variables d'environnement.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  // NOTE: PROTECTION TEMPORAIREMENT DÉSACTIVÉE — à réactiver après setup
-  // const setupKey = req.headers.get('x-setup-key')
-  // if (setupKey !== process.env.CRON_SECRET) {
-  //   return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
-  // }
+  if (!process.env.CRON_SECRET) {
+    return NextResponse.json({ error: 'MISCONFIGURED', message: 'CRON_SECRET non configuré' }, { status: 500 })
+  }
 
-  const email = process.env.SUPERADMIN_EMAIL ?? 'katantchaa@gmail.com'
-  const password = process.env.SETUP_PASSWORD ?? 'Admin123!'
+  const setupKey = req.headers.get('x-setup-key')
+  if (!setupKey || setupKey !== process.env.CRON_SECRET) {
+    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
+  }
+
+  const email = process.env.SUPERADMIN_EMAIL
+  const password = process.env.SETUP_PASSWORD
+
+  if (!email || !password) {
+    return NextResponse.json(
+      { error: 'MISCONFIGURED', message: 'SUPERADMIN_EMAIL et SETUP_PASSWORD doivent être définis dans les variables d\'environnement' },
+      { status: 500 }
+    )
+  }
 
   try {
     const existingUser = await prisma.user.findUnique({

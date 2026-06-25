@@ -12,18 +12,40 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ─── ENUMS ──────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+  CHAUFFEUR
+  RECOUVREMENT
+  MAIRIE
+}
+
 // ─── BASE IZIKIT — Auth & Users ─────────────────────────────────────────────
 
 model User {
-  id                String    @id @default(cuid())
-  email             String    @unique
+  id                String     @id @default(cuid())
+  email             String     @unique
   passwordHash      String?
   emailVerifiedAt   DateTime?
-  tokenVersion      Int       @default(0)
+  tokenVersion      Int        @default(0)
   name              String?
   avatarUrl         String?
-  role              String    @default("USER") // USER | ADMIN | SUPERADMIN
-  status            String    @default("ACTIVE") // ACTIVE | SUSPENDED
+  role              UserRole   @default(USER)
+  status            UserStatus @default(ACTIVE)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -83,7 +105,7 @@ model OrganizationMember {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   userId         String
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role           String       @default("MEMBER") // OWNER | ADMIN | MEMBER | CHAUFFEUR | RECOUVREMENT | MAIRIE
+  role           MemberRole   @default(MEMBER)
   createdAt      DateTime     @default(now())
 
   @@unique([organizationId, userId])
@@ -197,8 +219,9 @@ model DelegataireProfil {
   org                  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   telephone            String?
   adresse              String?
-  commune              String       @default("Commune de Vo1 (Vogan)")
-  region               String?      // pour mairies : région administrative
+  pays                 String       @default("Togo")       // Togo, Bénin, Côte d'Ivoire, Burkina Faso, Sénégal, Mali, Niger
+  commune              String       @default("Commune de Vo1 (Vogan)")  // nom de la ville
+  region               String?      // région administrative
   numContrat           String?      // null pour les mairies en gestion directe
   dateContrat          DateTime?    // null pour les mairies en gestion directe
   budgetAnnuel         Int?         // XOF — budget annuel déchets (mairies)
@@ -257,25 +280,27 @@ model Abonne {
 }
 
 model Paiement {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   abonneId     String
-  abonne       Abonne   @relation(fields: [abonneId], references: [id], onDelete: Cascade)
+  abonne       Abonne    @relation(fields: [abonneId], references: [id], onDelete: Cascade)
   agentId      String?
-  agent        User?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  montant      Int      // XOF
-  moyen        String   // mobile-money | espèces
-  operateur    String?  // tmoney | flooz
-  statut       String   @default("validé") // validé | en-attente | échoué
-  reference    String   @unique @default(cuid())
-  moisConcerne String   // YYYY-MM
-  orderId      String?  @unique
-  order        Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  date         DateTime @default(now())
-  createdAt    DateTime @default(now())
+  agent        User?     @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  montant      Int       // XOF
+  moyen        String    // mobile-money | espèces
+  operateur    String?   // tmoney | flooz
+  statut       String    @default("validé") // validé | en-attente | échoué
+  reference    String    @unique @default(cuid())
+  moisConcerne String    // YYYY-MM
+  orderId      String?   @unique
+  order        Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  date         DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  deletedAt    DateTime?
 
   @@index([abonneId])
   @@index([moisConcerne])
   @@index([statut])
+  @@index([deletedAt])
 }
 
 model Engin {

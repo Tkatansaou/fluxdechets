@@ -6,6 +6,9 @@
 
 # testing
 /coverage
+/playwright-report
+/test-results
+/blob-report
 
 # next.js
 /.next/
@@ -26,6 +29,7 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.vercel
 
 # vercel
 .vercel
@@ -40,7 +44,5 @@ next-env.d.ts
 
 .neon_key
 
-# Next.js 16: proxy.ts est le middleware officiel — middleware.ts ne doit pas coexister
-src/middleware.ts
 _eslint_output.json
 .env*

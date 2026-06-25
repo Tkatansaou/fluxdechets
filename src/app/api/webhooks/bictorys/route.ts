@@ -1,7 +1,7 @@
 export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createHmac } from 'node:crypto'
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import { Prisma } from '@prisma/client'
 import prisma from '@/lib/server/prisma'
 import { logger } from '@/lib/server/logger'
@@ -15,8 +15,11 @@ function verifyHmac(rawBody: string, signature: string | null): boolean {
   }
   if (!signature) return false
   const expected = 'sha256=' + createHmac('sha256', WEBHOOK_SECRET).update(rawBody).digest('hex')
-  // Constant-time comparison to prevent timing attacks
-  return signature.length === expected.length && signature === expected
+  try {
+    return timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+  } catch {
+    return false
+  }
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {

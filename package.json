@@ -12,11 +12,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "db:push": "prisma db push",
-    "db:migrate:dev": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy",
-    "db:migrate:status": "prisma migrate status",
-    "db:studio": "prisma studio",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "db:push": "node scripts/prisma-env.mjs db push",
+    "db:migrate:dev": "node scripts/prisma-env.mjs migrate dev",
+    "db:migrate:deploy": "node scripts/prisma-env.mjs migrate deploy",
+    "db:migrate:status": "node scripts/prisma-env.mjs migrate status",
+    "db:studio": "node scripts/prisma-env.mjs studio",
     "seed": "tsx --env-file-if-exists=.env.local scripts/seed-dev.ts",
     "seed-prod": "tsx --env-file-if-exists=.env.local scripts/seed-prod.ts",
     "postinstall": "prisma generate"
@@ -67,6 +70,7 @@
     "tailwindcss": "^3.4",
     "tsx": "^4.19.2",
     "typescript": "^5",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "@playwright/test": "^1.49.0"
   }
 }
