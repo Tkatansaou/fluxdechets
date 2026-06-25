@@ -13,6 +13,8 @@
 # next.js
 /.next/
 /out/
+# Next.js 16 uses proxy.ts as middleware — middleware.ts must not coexist
+src/middleware.ts
 
 # production
 /build
