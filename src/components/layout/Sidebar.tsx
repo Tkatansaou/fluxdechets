@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Users, CreditCard, Route, Truck,
   FileText, Package, Settings, LogOut, ScanSearch, HardHat, ShieldAlert,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import toast from 'react-hot-toast'
@@ -25,7 +26,7 @@ const navItems = [
 
 // Nav items supplémentaires pour les rôles spécifiques
 function getExtraNav(userRole: string | undefined) {
-  const items: { href: string; label: string; icon: any }[] = []
+  const items: { href: string; label: string; icon: LucideIcon }[] = []
   if (userRole === 'SUPERADMIN') {
     items.push({ href: '/superadmin', label: 'Admin plateforme', icon: ShieldAlert })
   }

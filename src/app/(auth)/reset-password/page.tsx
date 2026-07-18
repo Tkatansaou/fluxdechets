@@ -1,12 +1,11 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Truck, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 
 function ResetForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token') ?? ''
 

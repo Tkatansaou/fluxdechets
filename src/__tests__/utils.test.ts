@@ -49,7 +49,8 @@ describe('cn', () => {
   })
 
   it('handles conditional classes', () => {
-    expect(cn('text-red-500', false && 'hidden', 'font-bold')).toBe('text-red-500 font-bold')
+    const isHidden = false
+    expect(cn('text-red-500', isHidden && 'hidden', 'font-bold')).toBe('text-red-500 font-bold')
   })
 })
 

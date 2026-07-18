@@ -13,11 +13,11 @@ const I18nCtx = createContext<I18nCtxValue>({
   t: (key: string, fallback?: string) => serverT(key, 'fr', fallback),
 })
 
-export function I18nProvider({ children, lang = 'fr' }: { children: ReactNode; lang?: Lang }) {
-  const dicts: Record<Lang, Record<string, string>> = { fr: frDict }
+const dictionaries: Record<Lang, Record<string, string>> = { fr: frDict }
 
+export function I18nProvider({ children, lang = 'fr' }: { children: ReactNode; lang?: Lang }) {
   const t = useCallback(
-    (key: string, fallback?: string) => dicts[lang]?.[key] ?? fallback ?? key,
+    (key: string, fallback?: string) => dictionaries[lang]?.[key] ?? fallback ?? key,
     [lang],
   )
 

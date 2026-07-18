@@ -8,17 +8,16 @@ vi.stubGlobal('fetch', mockFetch)
 
 // Simple cookie simulation
 let cookieStore = ''
-const mockDoc: Record<string, any> = {}
-
 let origWindow: unknown
+const testGlobal = globalThis as unknown as { window: unknown }
 
 import { api, ApiError, storeCsrfToken, clearCsrfToken } from '@/lib/api'
 
 beforeEach(() => {
   cookieStore = ''
   mockFetch.mockReset()
-  origWindow = (globalThis as any).window
-  ;(globalThis as any).window = { location: { protocol: 'http:' } }
+  origWindow = testGlobal.window
+  testGlobal.window = { location: { protocol: 'http:' } }
   // Set up document with getter/setter
   Object.defineProperty(globalThis, 'document', {
     value: {
@@ -40,7 +39,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  ;(globalThis as any).window = origWindow
+  testGlobal.window = origWindow
 })
 
 describe('storeCsrfToken / clearCsrfToken', () => {

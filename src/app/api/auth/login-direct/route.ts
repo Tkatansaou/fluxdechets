@@ -21,18 +21,24 @@ export async function GET(): Promise<NextResponse> {
  * Reçoit le formulaire, authentifie, redirige.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  let email = '', password = ''
+  let email: string
+  let password: string
   const ct = req.headers.get('content-type') ?? ''
 
   try {
     if (ct.includes('application/json')) {
-      const body = await req.json()
-      email = body.email ?? ''
-      password = body.password ?? ''
+      const body: unknown = await req.json()
+      const credentials = typeof body === 'object' && body !== null
+        ? body as Record<string, unknown>
+        : {}
+      email = typeof credentials.email === 'string' ? credentials.email : ''
+      password = typeof credentials.password === 'string' ? credentials.password : ''
     } else {
       const form = await req.formData()
-      email = (form.get('email') as string) ?? ''
-      password = (form.get('password') as string) ?? ''
+      const formEmail = form.get('email')
+      const formPassword = form.get('password')
+      email = typeof formEmail === 'string' ? formEmail : ''
+      password = typeof formPassword === 'string' ? formPassword : ''
     }
   } catch {
     return respond(400, 'Erreur de lecture du formulaire')
@@ -44,7 +50,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   try {
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: email.trim().toLowerCase() },
       select: { id: true, email: true, passwordHash: true, status: true, tokenVersion: true, name: true, role: true },
     })
 
@@ -78,6 +84,7 @@ function respond(status: number, message: string): NextResponse {
 
 function RESULT(s: number, m: string): string {
   const ok = s < 400
+  const safeMessage = escapeHtml(m)
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>WasteFlow</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#f2f4f0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
@@ -89,10 +96,20 @@ a{color:#15803d;font-size:14px}
 .m{background:${ok?'#f0fdf4':'#fef2f2'};border:1px solid ${ok?'#bbf7d0':'#fecaca'};border-radius:6px;padding:12px;font-size:13px;margin-bottom:16px;text-align:center;color:${ok?'#15803d':'#dc2626'}}</style></head><body>
 <div class="card"><div class="icon">${ok?'✅':'❌'}</div>
 <h2>${ok?'Connexion réussie !':'Échec de la connexion'}</h2>
-<div class="m">${m}</div>
+<div class="m">${safeMessage}</div>
 ${ok?'<p>Redirection vers le tableau de bord...</p><meta http-equiv="refresh" content="1;url=/dashboard">':`<a href="/api/auth/login-direct">← Réessayer</a>`}
 <p style="margin-top:24px;font-size:11px;color:#9ca3af">WasteFlow &copy; 2026</p>
 </div></body></html>`
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>'"]/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;',
+  })[character] ?? character)
 }
 
 const PAGE = `<!DOCTYPE html>
@@ -128,10 +145,10 @@ button:active{transform:scale(.98)}
 
 <form method="POST" action="/api/auth/login-direct">
 <label for="e">Email</label>
-<input type="email" id="e" name="email" value="katantchaa@gmail.com" required autocomplete="email">
+<input type="email" id="e" name="email" required autocomplete="email">
 
 <label for="p">Mot de passe</label>
-<input type="password" id="p" name="password" value="Admin123!" required autocomplete="current-password">
+<input type="password" id="p" name="password" required autocomplete="current-password">
 
 <button type="submit">Se connecter</button>
 </form>
