@@ -14,7 +14,7 @@ export const viewport: Viewport = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
-  name: 'WasteFlow',
+  name: 'fluxdechets.com',
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',
   description:
@@ -38,8 +38,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   manifest: '/manifest.webmanifest',
   title: {
-    default: 'WasteFlow — Pilotage DSP Déchets Solides au Togo',
-    template: '%s | WasteFlow',
+    default: 'fluxdechets.com — Pilotage DSP Déchets Solides au Togo',
+    template: '%s | fluxdechets.com',
   },
   description:
     "Logiciel de pilotage de contrat DSP pour délégataires de collecte de déchets ménagers en Afrique de l'Ouest.",

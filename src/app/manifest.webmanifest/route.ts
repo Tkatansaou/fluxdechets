@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 
 const manifest = {
-  name: 'WasteFlow — Gestion des déchets',
-  short_name: 'WasteFlow',
+  name: 'fluxdechets.com — Gestion des déchets',
+  short_name: 'fluxdechets.com',
   description: 'Pilotage des opérations de collecte et de recouvrement.',
   start_url: '/',
   scope: '/',

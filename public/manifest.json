@@ -1,6 +1,6 @@
 {
-  "name": "WasteFlow — Pilotage DSP Déchets Solides",
-  "short_name": "WasteFlow",
+  "name": "fluxdechets.com — Pilotage DSP Déchets Solides",
+  "short_name": "fluxdechets.com",
   "description": "Logiciel de pilotage de contrat DSP pour délégataires de collecte de déchets ménagers au Togo.",
   "start_url": "/login",
   "display": "standalone",

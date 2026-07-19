@@ -129,7 +129,7 @@ export default function PayPage() {
             <Truck size={15} className="text-[#4ade80]" />
           </div>
           <div>
-            <div className="font-bold text-gray-900 leading-none">WasteFlow</div>
+            <div className="font-bold text-gray-900 leading-none">fluxdechets.com</div>
             <div className="text-xs text-gray-500">Paiement redevance collecte</div>
           </div>
         </div>
@@ -322,7 +322,7 @@ export default function PayPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-4">
-          WasteFlow · {payInfo?.abonne.orgName ?? ''} · Collecte des déchets {payInfo?.abonne.zone ?? ''}
+          fluxdechets.com · {payInfo?.abonne.orgName ?? ''} · Collecte des déchets {payInfo?.abonne.zone ?? ''}
         </p>
       </div>
     </div>

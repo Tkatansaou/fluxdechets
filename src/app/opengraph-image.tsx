@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
-export const alt = 'WasteFlow — Pilotage DSP Déchets Solides'
+export const alt = 'fluxdechets.com — Pilotage DSP Déchets Solides'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -42,7 +42,7 @@ export default function Image() {
             ♻
           </div>
           <span style={{ color: '#FFFFFF', fontSize: 48, fontWeight: 700, letterSpacing: -1 }}>
-            WasteFlow
+            fluxdechets.com
           </span>
         </div>
 

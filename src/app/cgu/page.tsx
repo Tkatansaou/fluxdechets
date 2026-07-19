@@ -11,7 +11,7 @@ export default function CGU() {
       <h2>1. Objet</h2>
       <p>
         Les présentes Conditions Générales d&apos;Utilisation (CGU) régissent l&apos;accès et l&apos;utilisation 
-        de la plateforme SaaS WasteFlow, éditée par Katansaou Tchaa.
+        de la plateforme SaaS fluxdechets.com, éditée par Katansaou Tchaa.
       </p>
       <p>
         En créant un compte et en utilisant la plateforme, l&apos;Utilisateur accepte sans réserve les présentes CGU.
@@ -19,7 +19,7 @@ export default function CGU() {
 
       <h2>2. Définitions</h2>
       <ul>
-        <li><strong>Plateforme</strong> : l&apos;application SaaS WasteFlow accessible sur fluxdechets.com</li>
+        <li><strong>Plateforme</strong> : l&apos;application SaaS fluxdechets.com accessible sur fluxdechets.com</li>
         <li><strong>Utilisateur</strong> : toute personne physique ou morale utilisant la plateforme</li>
         <li><strong>Délégataire</strong> : prestataire de service public de collecte des déchets</li>
         <li><strong>Commune/Mairie</strong> : autorité délégante supervisant le contrat DSP</li>
@@ -32,7 +32,7 @@ export default function CGU() {
         et à les maintenir à jour. Chaque compte est strictement personnel et non transférable.
       </p>
       <p>
-        WasteFlow se réserve le droit de refuser ou suspendre un compte en cas de :
+        fluxdechets.com se réserve le droit de refuser ou suspendre un compte en cas de :
       </p>
       <ul>
         <li>Fausses déclarations lors de l&apos;inscription</li>
@@ -43,7 +43,7 @@ export default function CGU() {
 
       <h2>4. Abonnements et tarifs</h2>
       <p>
-        WasteFlow propose trois profils d&apos;accès :
+        fluxdechets.com propose trois profils d&apos;accès :
       </p>
       <ul>
         <li><strong>Délégataire</strong> : abonnement payant à partir de 50 000 FCFA/mois</li>
@@ -61,23 +61,23 @@ export default function CGU() {
         <li>Ne pas tenter de contourner les mesures de sécurité</li>
         <li>Ne pas importer de données illicites ou frauduleuses</li>
         <li>Garantir l&apos;exactitude des données saisies</li>
-        <li>Informater WasteFlow en cas d&apos;utilisation non autorisée de son compte</li>
+        <li>Informer fluxdechets.com en cas d&apos;utilisation non autorisée de son compte</li>
       </ul>
 
       <h2>6. Propriété des données</h2>
       <p>
         Les données saisies par l&apos;Utilisateur dans la plateforme restent sa propriété exclusive. 
-        WasteFlow agit uniquement comme sous-traitant au sens du RGPD et de la loi togolaise 
+        fluxdechets.com agit uniquement comme sous-traitant au sens du RGPD et de la loi togolaise
         n°2024-005 sur la protection des données.
       </p>
 
       <h2>7. Disponibilité et maintenance</h2>
       <p>
-        WasteFlow s&apos;efforce d&apos;assurer une disponibilité de 99.9% (hors maintenance programmée). 
+        fluxdechets.com s&apos;efforce d&apos;assurer une disponibilité de 99.9% (hors maintenance programmée).
         Des fenêtres de maintenance peuvent être planifiées, avec notification préalable de 48h.
       </p>
       <p>
-        WasteFlow ne saurait être tenu responsable des indisponibilités liées à :
+        fluxdechets.com ne saurait être tenu responsable des indisponibilités liées à :
       </p>
       <ul>
         <li>La défaillance des réseaux de télécommunication</li>

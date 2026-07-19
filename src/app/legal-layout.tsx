@@ -13,7 +13,7 @@ export default function LegalPage({ title, children }: { title: string; children
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center">
               <Truck size={16} className="text-white" />
             </div>
-            <span className="font-bold text-gray-900">WasteFlow</span>
+            <span className="font-bold text-gray-900">fluxdechets.com</span>
           </Link>
           <Link
             href="/"
@@ -37,7 +37,7 @@ export default function LegalPage({ title, children }: { title: string; children
       {/* Footer */}
       <footer className="border-t border-gray-100 py-8">
         <div className="max-w-4xl mx-auto px-4 text-center text-xs text-gray-400">
-          &copy; {new Date().getFullYear()} WasteFlow — Propulsé depuis Lomé, Togo
+          &copy; {new Date().getFullYear()} fluxdechets.com — Propulsé depuis Lomé, Togo
         </div>
       </footer>
     </div>

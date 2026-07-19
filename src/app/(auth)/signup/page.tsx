@@ -3,7 +3,7 @@ import SignupClient from './SignupClient'
 
 export const metadata: Metadata = {
   title: 'Créer un espace',
-  description: 'Créez votre espace WasteFlow pour piloter votre contrat DSP de collecte des déchets ménagers au Togo.',
+  description: 'Créez votre espace fluxdechets.com pour piloter votre contrat DSP de collecte des déchets ménagers au Togo.',
   robots: { index: false, follow: false },
 }
 

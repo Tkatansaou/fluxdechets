@@ -65,7 +65,7 @@ function ResetForm() {
         <div className="w-12 h-12 rounded-xl bg-[#0B1F16] flex items-center justify-center mb-3">
           <Truck size={22} className="text-brand-400" />
         </div>
-        <h1 className="text-xl font-bold text-gray-900">WasteFlow</h1>
+        <h1 className="text-xl font-bold text-gray-900">fluxdechets.com</h1>
         <p className="text-sm text-gray-500 mt-1">Nouveau mot de passe</p>
       </div>
       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">

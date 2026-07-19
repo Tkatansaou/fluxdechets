@@ -2,7 +2,7 @@ import { Resend } from 'resend'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
-const FROM = process.env.EMAIL_FROM ?? 'WasteFlow <noreply@fluxdechets.com>'
+const FROM = process.env.EMAIL_FROM ?? 'fluxdechets.com <noreply@fluxdechets.com>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fluxdechets.com'
 
 export function isEmailConfigured(): boolean {
@@ -53,7 +53,7 @@ function base(content: string): string {
       <div class="logo">Waste<span>Flow</span></div>
     </div>
     <div class="body">${content}</div>
-    <div class="footer">WasteFlow — Pilotage DSP Déchets Solides · Togo<br>
+    <div class="footer">fluxdechets.com — Pilotage DSP Déchets Solides · Togo<br>
       Vous recevez cet email car vous avez un compte sur ${APP_URL}
     </div>
   </div>
@@ -65,10 +65,10 @@ function base(content: string): string {
 export async function sendWelcomeEmail(to: string, name: string, orgName: string): Promise<SendResult> {
   return send(
     to,
-    `Bienvenue sur WasteFlow, ${name} !`,
+    `Bienvenue sur fluxdechets.com, ${name} !`,
     base(`
       <h1>Bienvenue, ${name} 👋</h1>
-      <p>Votre organisation <strong>${orgName}</strong> est maintenant active sur WasteFlow.</p>
+      <p>Votre organisation <strong>${orgName}</strong> est maintenant active sur fluxdechets.com.</p>
       <p>Commencez par configurer vos zones de collecte et ajouter vos premiers abonnés.</p>
       <a href="${APP_URL}/dashboard" class="btn">Accéder au tableau de bord</a>
       <div class="info-box">
@@ -82,7 +82,7 @@ export async function sendWelcomeEmail(to: string, name: string, orgName: string
 export async function sendVerificationEmail(to: string, name: string, code: string): Promise<SendResult> {
   return send(
     to,
-    'Vérifiez votre adresse email — WasteFlow',
+    'Vérifiez votre adresse email — fluxdechets.com',
     base(`
       <h1>Vérification de votre email</h1>
       <p>Bonjour ${name}, entrez ce code dans l'application pour valider votre adresse :</p>
@@ -98,10 +98,10 @@ export async function sendPasswordResetEmail(to: string, name: string, resetToke
   const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`
   return send(
     to,
-    'Réinitialisation de votre mot de passe — WasteFlow',
+    'Réinitialisation de votre mot de passe — fluxdechets.com',
     base(`
       <h1>Réinitialisation du mot de passe</h1>
-      <p>Bonjour ${name}, vous avez demandé à réinitialiser votre mot de passe WasteFlow.</p>
+      <p>Bonjour ${name}, vous avez demandé à réinitialiser votre mot de passe fluxdechets.com.</p>
       <a href="${resetUrl}" class="btn">Réinitialiser mon mot de passe</a>
       <p style="font-size:12px;color:#6b7280;">Ce lien expire dans 1 heure. Si vous n'avez pas fait cette demande, ignorez cet email.</p>
     `)

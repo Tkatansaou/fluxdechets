@@ -198,7 +198,7 @@ export default function LandingPage() {
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#533afd] to-[#7c5cff] flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                   <Truck size={18} className="text-white" />
                 </div>
-                <span className="text-[17px] font-semibold text-[#061b31] tracking-tight">WasteFlow</span>
+                <span className="text-[17px] font-semibold text-[#061b31] tracking-tight">fluxdechets.com</span>
               </Link>
 
               {/* Desktop Nav */}
@@ -378,7 +378,7 @@ export default function LandingPage() {
                 Conçue pour chaque acteur
               </h2>
               <p className="mt-4 text-[15px] font-light leading-[1.6] text-[#4a5a6e]">
-                Que vous soyez prestataire, commune ou autorité de supervision, WasteFlow
+                Que vous soyez prestataire, commune ou autorité de supervision, fluxdechets.com
                 s'adapte à votre rôle.
               </p>
             </div>
@@ -420,7 +420,7 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               <div>
-                <div className="text-[11px] font-semibold text-[#533afd] uppercase tracking-[0.12em] mb-4">Pourquoi WasteFlow</div>
+                <div className="text-[11px] font-semibold text-[#533afd] uppercase tracking-[0.12em] mb-4">Pourquoi fluxdechets.com</div>
                 <h2 className="text-[32px] sm:text-[40px] font-light leading-[1.1] tracking-[-0.64px] text-[#061b31] mb-6">
                   La première plateforme DSP conçue pour l'Afrique
                 </h2>
@@ -446,7 +446,7 @@ export default function LandingPage() {
                     Prêt à digitaliser votre DSP&nbsp;?
                   </div>
                   <p className="text-[14px] font-light text-purple-200/80 mb-7 leading-relaxed">
-                    Rejoignez les délégataires et communes qui utilisent déjà WasteFlow au Togo.
+                    Rejoignez les délégataires et communes qui utilisent déjà fluxdechets.com au Togo.
                     Déploiement en 48h, accompagnement personnalisé.
                   </p>
                   <Link
@@ -572,7 +572,7 @@ export default function LandingPage() {
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#533afd] to-[#7c5cff] flex items-center justify-center">
                     <Truck size={16} className="text-white" />
                   </div>
-                  <span className="font-semibold text-white tracking-tight">WasteFlow</span>
+                  <span className="font-semibold text-white tracking-tight">fluxdechets.com</span>
                 </div>
                 <p className="text-[13px] font-light text-gray-500 max-w-xs leading-relaxed">
                   Plateforme SaaS de pilotage des contrats DSP de collecte des déchets solides
@@ -604,7 +604,7 @@ export default function LandingPage() {
             </div>
             <div className="mt-10 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-[11px] text-gray-600">
-                &copy; {mounted ? new Date().getFullYear() : 2026} WasteFlow. DSP Déchets Solides.
+                &copy; {mounted ? new Date().getFullYear() : 2026} fluxdechets.com. DSP Déchets Solides.
               </div>
               <div className="flex items-center gap-5 text-[11px] text-gray-600">
                 <span>Propulsé depuis Lomé, Togo</span>

@@ -10,7 +10,7 @@ export default function Confidentialite() {
     <LegalLayout title="Politique de confidentialité">
       <h2>1. Collecte des données</h2>
       <p>
-        WasteFlow collecte les données suivantes lors de l&apos;utilisation de la plateforme :
+        fluxdechets.com collecte les données suivantes lors de l&apos;utilisation de la plateforme :
       </p>
       <ul>
         <li><strong>Données d&apos;identification</strong> : nom, prénom, email, numéro de téléphone, fonction</li>
@@ -36,7 +36,7 @@ export default function Confidentialite() {
       </p>
       <ul>
         <li>Membres autorisés de votre organisation (selon les rôles configurés)</li>
-        <li>Administrateurs de la plateforme WasteFlow</li>
+        <li>Administrateurs de la plateforme fluxdechets.com</li>
         <li>Sous-traitants techniques : Vercel (hébergement), Neon (base de données), Bictorys (paiements)</li>
       </ul>
       <p>
@@ -53,7 +53,7 @@ export default function Confidentialite() {
 
       <h2>5. Sécurité des données</h2>
       <p>
-        WasteFlow met en œuvre des mesures techniques et organisationnelles appropriées :
+        fluxdechets.com met en œuvre des mesures techniques et organisationnelles appropriées :
       </p>
       <ul>
         <li>Chiffrement des données en transit (TLS 1.3) et au repos</li>

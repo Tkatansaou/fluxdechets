@@ -56,7 +56,7 @@ export function Sidebar() {
             <Truck size={14} className="text-white" />
           </div>
           <div>
-            <div className="text-white font-bold text-sm leading-none">WasteFlow</div>
+            <div className="text-white font-bold text-sm leading-none">fluxdechets.com</div>
             {user && (
               <div className="text-[10px] text-[#9DC4A8] leading-tight mt-0.5 truncate max-w-[140px]">
                 {user.orgName}

@@ -253,7 +253,7 @@ export default function SuperAdminPage() {
             </div>
             <h1 className="text-lg font-bold text-gray-900">Administration plateforme</h1>
           </div>
-          <p className="text-xs text-gray-400">Vue globale WasteFlow — toutes organisations confondues</p>
+          <p className="text-xs text-gray-400">Vue globale fluxdechets.com — toutes organisations confondues</p>
         </div>
         <Button size="sm" variant="ghost" onClick={() => { loadStats(); if (tab === 'orgs') loadOrgs(); if (tab === 'users') loadUsers() }}>
           <RefreshCw size={13} /> Actualiser

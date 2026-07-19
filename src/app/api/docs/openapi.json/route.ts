@@ -8,9 +8,9 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fluxdechets.com'
 const spec = {
   openapi: '3.0.3',
   info: {
-    title: 'WasteFlow API',
+    title: 'fluxdechets.com API',
     version: '1.0.0',
-    description: `API REST de WasteFlow — Plateforme de pilotage DSP pour délégataires de collecte de déchets solides au Togo.
+    description: `API REST de fluxdechets.com — Plateforme de pilotage DSP pour délégataires de collecte de déchets solides au Togo.
 
 ## Authentification
 Les endpoints protégés utilisent des cookies HttpOnly (JWT access/refresh).
@@ -22,7 +22,7 @@ Deux providers de mobile money sont supportés :
 - **Bictorys** (fallback) : Tmoney, Flooz
 `,
     contact: {
-      name: 'WasteFlow Support',
+      name: 'fluxdechets.com Support',
       url: APP_URL,
     },
   },

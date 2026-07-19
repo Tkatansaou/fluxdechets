@@ -21,7 +21,7 @@ export function TopBar() {
 
   const title = Object.entries(PAGE_TITLES)
     .find(([key]) => pathname === key || (key !== '/dashboard' && pathname.startsWith(key)))?.[1]
-    ?? 'WasteFlow'
+    ?? 'fluxdechets.com'
 
   const today = new Date().toLocaleDateString('fr-TG', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',

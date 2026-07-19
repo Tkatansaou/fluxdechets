@@ -34,7 +34,7 @@ export default function ApiDocsPage() {
             <Truck size={14} className="text-brand-400" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900">WasteFlow API</h1>
+            <h1 className="text-lg font-bold text-gray-900">fluxdechets.com API</h1>
             <p className="text-xs text-gray-500">Documentation des endpoints REST</p>
           </div>
         </div>

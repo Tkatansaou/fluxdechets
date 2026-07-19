@@ -64,7 +64,7 @@ export default function LoginClient() {
           <div className="w-12 h-12 rounded-xl bg-[#0B1F16] flex items-center justify-center mb-3">
             <Truck size={22} className="text-brand-400" />
           </div>
-          <h1 className="text-xl font-bold text-gray-900">WasteFlow</h1>
+          <h1 className="text-xl font-bold text-gray-900">fluxdechets.com</h1>
           <p className="text-sm text-gray-500 mt-1">Pilotage DSP — Déchets Solides</p>
         </div>
 
@@ -133,7 +133,7 @@ export default function LoginClient() {
           <Link href="/signup" className="text-brand-600 hover:underline">Créer un espace</Link>
         </p>
         <p className="text-center text-xs text-gray-400 mt-2">
-          WasteFlow © 2026 — DSP Déchets Solides
+          fluxdechets.com © 2026 — DSP Déchets Solides
         </p>
       </div>
     </div>

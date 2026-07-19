@@ -3,7 +3,7 @@ import LoginWrapper from './LoginWrapper'
 
 export const metadata: Metadata = {
   title: 'Connexion',
-  description: 'Connectez-vous à votre espace WasteFlow pour piloter votre contrat DSP de collecte des déchets.',
+  description: 'Connectez-vous à votre espace fluxdechets.com pour piloter votre contrat DSP de collecte des déchets.',
   robots: { index: false, follow: false },
 }
 

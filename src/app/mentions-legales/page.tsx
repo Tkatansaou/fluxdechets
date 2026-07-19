@@ -10,7 +10,7 @@ export default function MentionsLegales() {
     <LegalLayout title="Mentions légales">
       <h2>1. Éditeur de la plateforme</h2>
       <p>
-        <strong>WasteFlow</strong> est une plateforme SaaS éditée par :
+        <strong>fluxdechets.com</strong> est une plateforme SaaS éditée par :
       </p>
       <ul>
         <li><strong>Nom de l&apos;entreprise</strong> : Katansaou Tchaa (Entrepreneur individuel)</li>
@@ -36,7 +36,7 @@ export default function MentionsLegales() {
 
       <h2>4. Propriété intellectuelle</h2>
       <p>
-        L&apos;ensemble des contenus de la plateforme WasteFlow (textes, graphismes, logos, icônes, code source, base de données) 
+        L&apos;ensemble des contenus de la plateforme fluxdechets.com (textes, graphismes, logos, icônes, code source, base de données)
         est la propriété exclusive de l&apos;éditeur. Toute reproduction ou représentation totale ou partielle sans autorisation 
         préalable est interdite.
       </p>
@@ -62,7 +62,7 @@ export default function MentionsLegales() {
 
       <h2>7. Limitation de responsabilité</h2>
       <p>
-        WasteFlow s&apos;efforce d&apos;assurer l&apos;exactitude et la mise à jour des informations, mais ne saurait être tenu 
+        fluxdechets.com s&apos;efforce d&apos;assurer l&apos;exactitude et la mise à jour des informations, mais ne saurait être tenu
         responsable des dommages directs ou indirects résultant de l&apos;utilisation de la plateforme.
       </p>
     </LegalLayout>

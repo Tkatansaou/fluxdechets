@@ -93,7 +93,7 @@ function respond(status: number, message: string): NextResponse {
 function RESULT(s: number, m: string): string {
   const ok = s < 400
   const safeMessage = escapeHtml(m)
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>WasteFlow</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>fluxdechets.com</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#f2f4f0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
 .card{background:#fff;border-radius:12px;padding:32px;text-align:center;max-width:400px;width:100%}
@@ -106,7 +106,7 @@ a{color:#15803d;font-size:14px}
 <h2>${ok?'Connexion réussie !':'Échec de la connexion'}</h2>
 <div class="m">${safeMessage}</div>
 ${ok?'<p>Redirection vers le tableau de bord...</p><meta http-equiv="refresh" content="1;url=/dashboard">':`<a href="/api/auth/login-direct">← Réessayer</a>`}
-<p style="margin-top:24px;font-size:11px;color:#9ca3af">WasteFlow &copy; 2026</p>
+<p style="margin-top:24px;font-size:11px;color:#9ca3af">fluxdechets.com &copy; 2026</p>
 </div></body></html>`
 }
 
@@ -125,7 +125,7 @@ const PAGE = `<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Connexion — WasteFlow</title>
+<title>Connexion — fluxdechets.com</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;background:#f2f4f0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
@@ -146,7 +146,7 @@ button:active{transform:scale(.98)}
 <body>
 <div class="card">
 <div class="logo"><svg width="40" height="40" viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="10" fill="#15803d"/><path d="M12 28h16M12 28l-2-6h20l-2 6M12 28l-4 4M28 28l4 4" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><path d="M16 18h8" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></div>
-<h1>WasteFlow</h1>
+<h1>fluxdechets.com</h1>
 <p class="sub">Pilotage DSP — Déchets Solides</p>
 
 <div class="info">Formulaire simplifi&eacute; — sans JavaScript</div>
@@ -161,7 +161,7 @@ button:active{transform:scale(.98)}
 <button type="submit">Se connecter</button>
 </form>
 
-<div class="footer">WasteFlow &copy; 2026 — DSP D&eacute;chets Solides</div>
+<div class="footer">fluxdechets.com &copy; 2026 — DSP D&eacute;chets Solides</div>
 </div>
 </body>
 </html>`
