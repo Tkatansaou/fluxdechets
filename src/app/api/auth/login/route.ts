@@ -88,6 +88,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     logger.error('login_unexpected_error', { error: msg })
-    return NextResponse.json({ error: 'SERVER_ERROR', message: msg }, { status: 500 })
+    return NextResponse.json({ error: 'SERVER_ERROR' }, { status: 500 })
   }
 }

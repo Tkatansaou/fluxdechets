@@ -149,7 +149,7 @@ model WebhookLog {
   processedAt DateTime?
   createdAt   DateTime  @default(now())
 
-  @@unique([externalId, eventType])
+  @@unique([provider, externalId, eventType])
   @@index([provider, createdAt])
 }
 

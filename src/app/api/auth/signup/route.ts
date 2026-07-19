@@ -101,7 +101,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const response = NextResponse.json({ ok: true }, { status: 201 })
   await setAuthCookiesOnResponse(
     response,
-    user.id, user.email, user.orgId, 'USER', user.tokenVersion,
+    user.id, user.email, user.orgId, 'ADMIN', user.tokenVersion,
   )
 
   return response

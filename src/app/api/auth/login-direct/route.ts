@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import prisma from '@/lib/server/prisma'
 import { setAuthCookiesOnResponse } from '@/lib/server/auth'
+import { checkLoginRateLimit } from '@/lib/server/ratelimit'
+import { logger } from '@/lib/server/logger'
 
 /**
  * GET /api/auth/login-direct
@@ -21,6 +23,11 @@ export async function GET(): Promise<NextResponse> {
  * Reçoit le formulaire, authentifie, redirige.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const rateLimit = await checkLoginRateLimit(req)
+  if (!rateLimit.success) {
+    return respond(429, 'Trop de tentatives. Réessayez plus tard.')
+  }
+
   let email: string
   let password: string
   const ct = req.headers.get('content-type') ?? ''
@@ -71,7 +78,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return res
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Erreur serveur'
-    return respond(500, msg)
+    logger.error('login_direct_unexpected_error', { error: msg })
+    return respond(500, 'Une erreur serveur est survenue')
   }
 }
 

@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAuth } from '@/lib/server/middleware'
+import { requireAuth, requireRole } from '@/lib/server/middleware'
 import { verifyCsrf } from '@/lib/server/auth'
 import prisma from '@/lib/server/prisma'
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const csrf = verifyCsrf(req)
   if (csrf) return csrf
 
-  const auth = await requireAuth(req)
+  const auth = await requireRole(req, ['ADMIN', 'SUPERADMIN', 'MEMBER'])
   if (auth instanceof NextResponse) return auth
 
   const body = createSchema.safeParse(await req.json().catch(() => ({})))

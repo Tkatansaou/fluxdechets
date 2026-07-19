@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAuth } from '@/lib/server/middleware'
+import { requireAuth, requireRole } from '@/lib/server/middleware'
 import { verifyCsrf } from '@/lib/server/auth'
 import prisma from '@/lib/server/prisma'
 
@@ -44,19 +44,27 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const csrf = verifyCsrf(req)
   if (csrf) return csrf
 
-  const auth = await requireAuth(req)
+  const auth = await requireRole(req, ['ADMIN', 'SUPERADMIN', 'MEMBER'])
   if (auth instanceof NextResponse) return auth
 
   const body = createSchema.safeParse(await req.json().catch(() => ({})))
   if (!body.success) return NextResponse.json({ error: 'VALIDATION_ERROR', issues: body.error.issues }, { status: 422 })
 
   // Verify zone, engin, chauffeur all belong to org
-  const [zone, engin] = await Promise.all([
+  const [zone, engin, chauffeur] = await Promise.all([
     prisma.zone.findFirst({ where: { id: body.data.zoneId, orgId: auth.orgId } }),
     prisma.engin.findFirst({ where: { id: body.data.enginId, orgId: auth.orgId } }),
+    prisma.organizationMember.findFirst({
+      where: {
+        userId: body.data.chauffeurId,
+        organizationId: auth.orgId,
+        role: { in: ['CHAUFFEUR', 'ADMIN', 'OWNER'] },
+      },
+    }),
   ])
   if (!zone) return NextResponse.json({ error: 'ZONE_NOT_FOUND' }, { status: 404 })
   if (!engin) return NextResponse.json({ error: 'ENGIN_NOT_FOUND' }, { status: 404 })
+  if (!chauffeur) return NextResponse.json({ error: 'CHAUFFEUR_NOT_FOUND' }, { status: 404 })
   if (engin.statut === 'en-panne') return NextResponse.json({ error: 'ENGIN_EN_PANNE' }, { status: 422 })
 
   const tournee = await prisma.tournee.create({

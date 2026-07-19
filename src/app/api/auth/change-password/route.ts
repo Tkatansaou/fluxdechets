@@ -6,6 +6,7 @@ import { z } from 'zod'
 import prisma from '@/lib/server/prisma'
 import { requireAuth } from '@/lib/server/middleware'
 import { logger } from '@/lib/server/logger'
+import { verifyCsrf } from '@/lib/server/auth'
 
 const schema = z.object({
   currentPassword: z.string().min(1, 'Mot de passe actuel requis'),
@@ -14,6 +15,9 @@ const schema = z.object({
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
+    const csrf = verifyCsrf(req)
+    if (csrf) return csrf
+
     const auth = await requireAuth(req)
     if (auth instanceof NextResponse) return auth
 

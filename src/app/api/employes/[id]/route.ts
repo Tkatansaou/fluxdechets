@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAuth } from '@/lib/server/middleware'
+import { requireRole } from '@/lib/server/middleware'
 import { verifyCsrf } from '@/lib/server/auth'
 import prisma from '@/lib/server/prisma'
 
@@ -23,7 +23,7 @@ const updateSchema = z.object({
 })
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
-  const auth = await requireAuth(req)
+  const auth = await requireRole(req, ['ADMIN', 'SUPERADMIN'])
   if (auth instanceof NextResponse) return auth
 
   const { id } = await params
@@ -40,7 +40,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const csrf = verifyCsrf(req)
   if (csrf) return csrf
 
-  const auth = await requireAuth(req)
+  const auth = await requireRole(req, ['ADMIN', 'SUPERADMIN'])
   if (auth instanceof NextResponse) return auth
 
   const { id } = await params
@@ -75,7 +75,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const csrf = verifyCsrf(req)
   if (csrf) return csrf
 
-  const auth = await requireAuth(req)
+  const auth = await requireRole(req, ['ADMIN', 'SUPERADMIN'])
   if (auth instanceof NextResponse) return auth
 
   const { id } = await params

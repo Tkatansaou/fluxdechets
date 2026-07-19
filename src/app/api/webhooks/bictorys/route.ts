@@ -59,7 +59,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Log the webhook
   const jsonPayload = payload as unknown as Prisma.InputJsonValue
   await prisma.webhookLog.upsert({
-    where: { externalId_eventType: { externalId, eventType: event } },
+    where: { provider_externalId_eventType: { provider: 'bictorys', externalId, eventType: event } },
     create: { provider: 'bictorys', externalId, eventType: event, payload: jsonPayload },
     update: { payload: jsonPayload },
   })
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             })]
           : []),
         prisma.webhookLog.update({
-          where: { externalId_eventType: { externalId, eventType: event } },
+          where: { provider_externalId_eventType: { provider: 'bictorys', externalId, eventType: event } },
           data: { processedAt: new Date() },
         }),
       ])
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           ? [prisma.paiement.update({ where: { id: order.paiement.id }, data: { statut: 'échoué' } })]
           : []),
         prisma.webhookLog.update({
-          where: { externalId_eventType: { externalId, eventType: event } },
+          where: { provider_externalId_eventType: { provider: 'bictorys', externalId, eventType: event } },
           data: { processedAt: new Date() },
         }),
       ])

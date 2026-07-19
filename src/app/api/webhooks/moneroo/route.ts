@@ -1,19 +1,15 @@
 export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createHmac } from 'node:crypto'
 import { Prisma } from '@prisma/client'
 import prisma from '@/lib/server/prisma'
 import { logger } from '@/lib/server/logger'
+import { verifyWebhookHmac } from '@/lib/server/payment-security'
 
 const WEBHOOK_SECRET = process.env.MONEROO_WEBHOOK_SECRET
 
 function verifyHmac(rawBody: string, signature: string | null): boolean {
-  if (!WEBHOOK_SECRET) return true // simulation mode: skip verification
-  if (!signature) return false
-  // Moneroo sends: sha256=<hex>
-  const expected = 'sha256=' + createHmac('sha256', WEBHOOK_SECRET).update(rawBody).digest('hex')
-  return signature === expected
+  return verifyWebhookHmac(rawBody, signature, WEBHOOK_SECRET)
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -21,6 +17,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const signature = req.headers.get('x-moneroo-signature')
 
   if (!verifyHmac(rawBody, signature)) {
+    if (!WEBHOOK_SECRET && process.env.NODE_ENV === 'production') {
+      logger.error('moneroo_webhook_secret_missing')
+      return NextResponse.json({ error: 'MISCONFIGURED' }, { status: 500 })
+    }
     logger.warn('moneroo_webhook_invalid_signature')
     return NextResponse.json({ error: 'INVALID_SIGNATURE' }, { status: 401 })
   }
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const jsonPayload = payload as unknown as Prisma.InputJsonValue
   await prisma.webhookLog.upsert({
-    where: { externalId_eventType: { externalId, eventType: event } },
+    where: { provider_externalId_eventType: { provider: 'moneroo', externalId, eventType: event } },
     create: { provider: 'moneroo', externalId, eventType: event, payload: jsonPayload },
     update: { payload: jsonPayload },
   })
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             ]
           : []),
         prisma.webhookLog.update({
-          where: { externalId_eventType: { externalId, eventType: event } },
+          where: { provider_externalId_eventType: { provider: 'moneroo', externalId, eventType: event } },
           data: { processedAt: new Date() },
         }),
       ])
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           ? [prisma.paiement.update({ where: { id: order.paiement.id }, data: { statut: 'échoué' } })]
           : []),
         prisma.webhookLog.update({
-          where: { externalId_eventType: { externalId, eventType: event } },
+          where: { provider_externalId_eventType: { provider: 'moneroo', externalId, eventType: event } },
           data: { processedAt: new Date() },
         }),
       ])

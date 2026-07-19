@@ -8,6 +8,7 @@ import { randomBytes } from 'node:crypto'
 import { MONTANT_REDEVANCE } from '@/lib/constants'
 import { initMonerooPayment, isMonerooConfigured } from '@/lib/server/moneroo'
 import { logger } from '@/lib/server/logger'
+import { isPaymentSimulationEnabled } from '@/lib/server/payment-security'
 
 const schema = z.object({
   operateur: z.enum(['tmoney', 'flooz', 'moov']),
@@ -198,7 +199,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     }
   }
 
-  // ── Demo / simulation mode ─────────────────────────────────────────────────
+  // Simulation is an explicit development-only feature. Never create a paid
+  // record in production when a provider is missing or unavailable.
+  const simulationEnabled = isPaymentSimulationEnabled()
+
+  if (!simulationEnabled) {
+    logger.error('payment_provider_unavailable', {
+      monerooConfigured: isMonerooConfigured(),
+      bictorysConfigured: Boolean(bictorysKey),
+    })
+    return NextResponse.json({ error: 'PAYMENT_PROVIDER_UNAVAILABLE' }, { status: 503 })
+  }
+
+  // ── Explicit development simulation mode ──────────────────────────────────
   await new Promise(r => setTimeout(r, 600))
   const reference = 'WF' + randomBytes(4).toString('hex').toUpperCase()
 

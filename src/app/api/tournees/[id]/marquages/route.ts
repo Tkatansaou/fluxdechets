@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAuth } from '@/lib/server/middleware'
+import { requireRole } from '@/lib/server/middleware'
 import { verifyCsrf } from '@/lib/server/auth'
 import prisma from '@/lib/server/prisma'
 
@@ -20,7 +20,7 @@ export async function POST(
   const csrf = verifyCsrf(req)
   if (csrf) return csrf
 
-  const auth = await requireAuth(req)
+  const auth = await requireRole(req, ['ADMIN', 'SUPERADMIN', 'MEMBER', 'CHAUFFEUR'])
   if (auth instanceof NextResponse) return auth
 
   const { id } = await params
@@ -28,8 +28,22 @@ export async function POST(
   const body = marquageSchema.safeParse(await req.json().catch(() => ({})))
   if (!body.success) return NextResponse.json({ error: 'VALIDATION_ERROR', issues: body.error.issues }, { status: 422 })
 
-  const tournee = await prisma.tournee.findFirst({ where: { id, zone: { orgId: auth.orgId } } })
+  const tournee = await prisma.tournee.findFirst({
+    where: { id, zone: { orgId: auth.orgId } },
+    select: { id: true, statut: true, zoneId: true },
+  })
   if (!tournee) return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 })
+
+  const abonne = await prisma.abonne.findFirst({
+    where: {
+      id: body.data.abonneId,
+      zoneId: tournee.zoneId,
+      actif: true,
+      zone: { orgId: auth.orgId },
+    },
+    select: { id: true },
+  })
+  if (!abonne) return NextResponse.json({ error: 'ABONNE_NOT_FOUND' }, { status: 404 })
 
   const marquage = await prisma.marquage.upsert({
     where: { tourneeId_abonneId: { tourneeId: id, abonneId: body.data.abonneId } },

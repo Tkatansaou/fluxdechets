@@ -26,7 +26,16 @@ export async function requireAuth(req: NextRequest): Promise<AuthContext | NextR
   // Verify user still exists and not suspended
   const user = await prisma.user.findUnique({
     where: { id: session.sub },
-    select: { status: true, tokenVersion: true },
+    select: {
+      status: true,
+      tokenVersion: true,
+      role: true,
+      memberships: {
+        where: { organizationId: session.orgId },
+        select: { role: true },
+        take: 1,
+      },
+    },
   })
 
   if (!user || user.status === 'SUSPENDED') {
@@ -37,12 +46,38 @@ export async function requireAuth(req: NextRequest): Promise<AuthContext | NextR
     return NextResponse.json({ error: 'SESSION_REVOKED' }, { status: 401 })
   }
 
+  const membership = user.memberships[0]
+  if (!membership && user.role !== 'SUPERADMIN') {
+    return NextResponse.json({ error: 'ORG_ACCESS_REVOKED' }, { status: 403 })
+  }
+
+  const role = user.role === 'SUPERADMIN'
+    ? 'SUPERADMIN'
+    : membership?.role === 'OWNER' ? 'ADMIN' : membership?.role
+
+  if (!role) {
+    return NextResponse.json({ error: 'ORG_ACCESS_REVOKED' }, { status: 403 })
+  }
+
   return {
     userId: session.sub,
     email: session.email,
     orgId: session.orgId,
-    role: session.role,
+    role,
   }
+}
+
+/** Require one of the current organisation roles, revalidated from the DB. */
+export async function requireRole(
+  req: NextRequest,
+  allowedRoles: readonly string[],
+): Promise<AuthContext | NextResponse> {
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
+  if (!allowedRoles.includes(auth.role)) {
+    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
+  }
+  return auth
 }
 
 /**

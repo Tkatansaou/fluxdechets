@@ -9,6 +9,7 @@ on:
 env:
   NODE_VERSION: '20'
   DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/wasteflow_test'
+  DIRECT_URL: 'postgresql://postgres:postgres@localhost:5432/wasteflow_test'
   JWT_SECRET: 'test-jwt-secret-that-is-at-least-32-chars!!'
   ENCRYPTION_KEY: 'dGhpcyBpcyBhIDMyLWJ5dGUgYmFzZTY0IGtleSE='
   NEXT_PUBLIC_APP_URL: 'http://localhost:3000'
@@ -49,6 +50,9 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
+      - name: Apply database migrations
+        run: npm run db:migrate:deploy
+
       - name: Lint
         run: npm run lint
 
@@ -63,6 +67,12 @@ jobs:
           JWT_SECRET: ${{ env.JWT_SECRET }}
           ENCRYPTION_KEY: ${{ env.ENCRYPTION_KEY }}
           NEXT_PUBLIC_APP_URL: ${{ env.NEXT_PUBLIC_APP_URL }}
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run end-to-end tests
+        run: npm run test:e2e -- --project=chromium
 
   build:
     name: Build

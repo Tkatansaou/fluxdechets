@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAuth } from '@/lib/server/middleware'
+import { requireRole } from '@/lib/server/middleware'
 import { verifyCsrf } from '@/lib/server/auth'
 import prisma from '@/lib/server/prisma'
 import { randomBytes } from 'node:crypto'
@@ -19,7 +19,7 @@ const createSchema = z.object({
 })
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  const auth = await requireAuth(req)
+  const auth = await requireRole(req, ['ADMIN', 'SUPERADMIN', 'RECOUVREMENT'])
   if (auth instanceof NextResponse) return auth
 
   const { searchParams } = new URL(req.url)
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const csrf = verifyCsrf(req)
   if (csrf) return csrf
 
-  const auth = await requireAuth(req)
+  const auth = await requireRole(req, ['ADMIN', 'SUPERADMIN', 'RECOUVREMENT'])
   if (auth instanceof NextResponse) return auth
 
   const body = createSchema.safeParse(await req.json().catch(() => ({})))

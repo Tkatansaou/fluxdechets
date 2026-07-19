@@ -5,7 +5,9 @@ import { NextRequest, NextResponse } from 'next/server'
 const COOKIE_PREFIX = process.env.NEXT_PUBLIC_COOKIE_PREFIX ?? 'wf'
 const ACCESS_COOKIE = `${COOKIE_PREFIX}-access`
 
-const PUBLIC_EXACT = new Set(['/login', '/signup', '/', '/forgot-password', '/reset-password'])
+const PUBLIC_EXACT = new Set([
+  '/login', '/signup', '/', '/forgot-password', '/reset-password', '/offline', '/sw.js',
+])
 const PUBLIC_PREFIXES = ['/pay/', '/api/', '/api-docs', '/_next/', '/favicon', '/icon', '/opengraph-image', '/sitemap', '/robots']
 
 export function proxy(req: NextRequest) {
