@@ -36,6 +36,7 @@ const jsonLd = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
+  manifest: '/manifest.webmanifest',
   title: {
     default: 'WasteFlow — Pilotage DSP Déchets Solides au Togo',
     template: '%s | WasteFlow',

@@ -1,1 +1,1 @@
-// Fichier vide — le manifest est servi via /api/manifest
+export { GET } from '../manifest.webmanifest/route'
