@@ -8,7 +8,10 @@ const ACCESS_COOKIE = `${COOKIE_PREFIX}-access`
 const PUBLIC_EXACT = new Set([
   '/login', '/signup', '/', '/forgot-password', '/reset-password', '/offline', '/sw.js',
 ])
-const PUBLIC_PREFIXES = ['/pay/', '/api/', '/api-docs', '/_next/', '/favicon', '/icon', '/opengraph-image', '/sitemap', '/robots']
+const PUBLIC_PREFIXES = [
+  '/pay/', '/api/', '/api-docs', '/_next/', '/favicon', '/icon', '/manifest',
+  '/opengraph-image', '/sitemap', '/robots',
+]
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
