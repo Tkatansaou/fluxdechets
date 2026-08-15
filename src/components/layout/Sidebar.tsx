@@ -11,17 +11,32 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import toast from 'react-hot-toast'
 
-const navItems = [
-  { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/abonnes', label: 'Abonnés', icon: Users },
-  { href: '/paiements', label: 'Paiements', icon: CreditCard },
-  { href: '/tournees', label: 'Tournées', icon: Route },
-  { href: '/engins', label: 'Engins', icon: Truck },
-  { href: '/employes', label: 'Employés', icon: HardHat },
-  { href: '/rapports', label: 'Rapports DSP', icon: FileText },
-  { href: '/consommables', label: 'Consommables', icon: Package },
-  { href: '/scraping', label: 'Prospection', icon: ScanSearch },
-  { href: '/parametres', label: 'Paramètres', icon: Settings },
+const navSections = [
+  {
+    label: 'Pilotage',
+    items: [
+      { href: '/dashboard', label: 'Vue d’ensemble', icon: LayoutDashboard },
+      { href: '/tournees', label: 'Tournées', icon: Route },
+      { href: '/rapports', label: 'Rapports DSP', icon: FileText },
+    ],
+  },
+  {
+    label: 'Opérations',
+    items: [
+      { href: '/abonnes', label: 'Abonnés', icon: Users },
+      { href: '/paiements', label: 'Recouvrement', icon: CreditCard },
+      { href: '/engins', label: 'Flotte & engins', icon: Truck },
+      { href: '/consommables', label: 'Stocks', icon: Package },
+      { href: '/employes', label: 'Équipe', icon: HardHat },
+    ],
+  },
+  {
+    label: 'Développement',
+    items: [
+      { href: '/scraping', label: 'Prospection', icon: ScanSearch },
+      { href: '/parametres', label: 'Paramètres', icon: Settings },
+    ],
+  },
 ]
 
 // Nav items supplémentaires pour les rôles spécifiques
@@ -48,45 +63,56 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="hidden md:flex flex-col w-[220px] flex-shrink-0 bg-[#0B1F16] h-screen sticky top-0">
+    <aside className="sidebar hidden md:flex flex-col w-[236px] flex-shrink-0 bg-[#0B1F16] h-screen sticky top-0 border-r border-[#173224]">
       {/* Logo */}
-      <div className="px-4 py-4 border-b border-[#1E3A28]">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-md bg-brand-600 flex items-center justify-center flex-shrink-0">
-            <Truck size={14} className="text-white" />
+      <div className="px-4 py-[18px] border-b border-[#1E3A28]">
+        <Link href="/dashboard" className="flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">
+          <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center flex-shrink-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]">
+            <Truck size={16} strokeWidth={2.25} className="text-white" />
           </div>
-          <div>
-            <div className="text-white font-bold text-sm leading-none">fluxdechets.com</div>
+          <div className="min-w-0">
+            <div className="text-white font-bold text-sm leading-none tracking-tight">fluxdechets.com</div>
             {user && (
-              <div className="text-[10px] text-[#9DC4A8] leading-tight mt-0.5 truncate max-w-[140px]">
+              <div className="text-[10px] text-[#9DC4A8] leading-tight mt-1 truncate max-w-[160px]">
                 {user.orgName}
               </div>
             )}
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 py-2 overflow-y-auto">
-        {navItems.map(item => {
-          const Icon = item.icon
-          const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 px-4 py-2.5 mx-2 rounded-md text-sm transition-colors duration-100',
-                active
-                  ? 'bg-[#1A3D28] text-white font-medium'
-                  : 'text-[#9DC4A8] hover:text-white hover:bg-[#162E1F]',
-              )}
-            >
-              <Icon size={16} className="flex-shrink-0" />
-              <span className="flex-1 truncate">{item.label}</span>
-            </Link>
-          )
-        })}
+      <nav className="flex-1 py-3 overflow-y-auto" aria-label="Navigation principale">
+        {navSections.map((section, sectionIndex) => (
+          <div key={section.label} className={cn(sectionIndex > 0 && 'mt-3')}>
+            <div className="px-5 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#63866D]">
+              {section.label}
+            </div>
+            <div className="space-y-0.5 px-2">
+              {section.items.map(item => {
+                const Icon = item.icon
+                const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={active ? 'page' : undefined}
+                    className={cn(
+                      'relative flex items-center gap-3 px-3 py-2 rounded-md text-[13px] transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400',
+                      active
+                        ? 'bg-[#1A3D28] text-white font-semibold shadow-[inset_0_0_0_1px_rgba(134,239,172,0.08)]'
+                        : 'text-[#A9C8B1] hover:text-white hover:bg-[#162E1F]',
+                    )}
+                  >
+                    {active && <span className="absolute left-0 w-0.5 h-4 rounded-r bg-brand-400" />}
+                    <Icon size={16} strokeWidth={active ? 2.25 : 1.8} className="flex-shrink-0" />
+                    <span className="flex-1 truncate">{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Nav items supplémentaires (superadmin, mairie…) */}
@@ -113,24 +139,25 @@ export function Sidebar() {
       {/* User / Logout */}
       <div className="border-t border-[#1E3A28] p-3">
         {user && (
-          <div className="flex items-center gap-2.5 px-2 py-1.5 mb-1">
-            <div className="w-7 h-7 rounded-full bg-brand-700 flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-bold text-white">
+          <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-md bg-[#10281B]">
+            <div className="w-8 h-8 rounded-full bg-brand-700 border border-brand-500/40 flex items-center justify-center flex-shrink-0">
+              <span className="text-[11px] font-bold text-white">
                 {(user.name ?? user.email).slice(0, 2).toUpperCase()}
               </span>
             </div>
-            <div className="min-w-0">
-              <div className="text-xs font-medium text-white truncate">{user.name ?? user.email}</div>
-              <div className="text-[10px] text-[#9DC4A8] truncate">{user.commune}</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold text-white truncate">{user.name ?? user.email}</div>
+              <div className="text-[10px] text-[#9DC4A8] truncate mt-0.5">{user.commune}</div>
             </div>
           </div>
         )}
         <button
+          type="button"
           onClick={handleLogout}
-          className="flex items-center gap-3 px-2 py-2 w-full rounded-md text-[#9DC4A8] hover:text-white hover:bg-[#162E1F] text-sm transition-colors"
+          className="flex items-center gap-3 px-2 py-2 w-full rounded-md text-[#9DC4A8] hover:text-white hover:bg-[#162E1F] text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
         >
           <LogOut size={14} />
-          <span>Déconnexion</span>
+          <span>Se déconnecter</span>
         </button>
       </div>
     </aside>
