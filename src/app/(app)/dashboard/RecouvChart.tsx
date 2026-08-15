@@ -14,6 +14,7 @@ interface DataPoint {
 
 interface Props {
   data: DataPoint[]
+  objective: number
 }
 
 const CustomTooltip = ({ active, payload, label }: TooltipProps<ValueType, NameType>) => {
@@ -26,7 +27,7 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<ValueType, NameT
   )
 }
 
-export default function RecouvChart({ data }: Props) {
+export default function RecouvChart({ data, objective }: Props) {
   return (
     <ResponsiveContainer width="100%" height={160}>
       <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
@@ -46,17 +47,17 @@ export default function RecouvChart({ data }: Props) {
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F9FAFB' }} />
         <ReferenceLine
-          y={80}
-          stroke="#EF4444"
+          y={objective}
+          stroke="#DC2626"
           strokeDasharray="4 4"
           strokeWidth={1.5}
-          label={{ value: '80%', position: 'right', fontSize: 10, fill: '#EF4444' }}
+          label={{ value: `${objective}%`, position: 'insideTopRight', fontSize: 10, fill: '#DC2626' }}
         />
         <Bar dataKey="taux" radius={[3, 3, 0, 0]}>
           {data.map((entry, index) => (
             <Cell
               key={index}
-              fill={entry.taux >= 80 ? '#16A34A' : entry.taux >= 60 ? '#F59E0B' : '#EF4444'}
+              fill={entry.taux >= objective ? '#15803D' : entry.taux >= Math.max(objective - 20, 0) ? '#D97706' : '#DC2626'}
             />
           ))}
         </Bar>
